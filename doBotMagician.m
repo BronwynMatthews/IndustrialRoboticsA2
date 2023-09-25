@@ -9,7 +9,7 @@ classdef DobotMagician < RobotBaseClass
     % that this matches the real robot!
 
     properties(Access =public)   
-        plyFileNameStem = 'DobotMagician';
+        plyFileNameStem = 'LinearDobotMagician';
 
         %> defaultRealQ 
         defaultRealQ  = [0,pi/4,pi/4,0,0];
@@ -27,7 +27,10 @@ classdef DobotMagician < RobotBaseClass
         end
 
 %% CreateModel
-        function CreateModel(self)       
+        function CreateModel(self)
+            link(1) = Link([pi     0       0       pi/2    1]); % PRISMATIC Link
+            link(1).qlim = [-0.8 -0.01]; % set limits for link1 of the LinearUR3 (from Linear UR5)
+
             link(1) = Link('d',0.103+0.0362,    'a',0,      'alpha',-pi/2,  'offset',0, 'qlim',[deg2rad(-135),deg2rad(135)]);
             link(2) = Link('d',0,        'a',0.135,  'alpha',0,      'offset',-pi/2, 'qlim',[deg2rad(5),deg2rad(80)]);
             link(3) = Link('d',0,        'a',0.147,  'alpha',0,      'offset',0, 'qlim',[deg2rad(-5),deg2rad(85)]);

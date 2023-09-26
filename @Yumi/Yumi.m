@@ -1,7 +1,7 @@
 classdef Yumi < RobotBaseClass
     properties(Access = public)   
-        plyFileNameStem = 'abbyumi';
-        q0 = [0,0,0,0,0,0,0]
+        plyFileNameStem = 'ABB_Yumi_';
+        q0 = [0,-pi/3,0,pi,0,0,0]
     end
     
     methods
@@ -9,13 +9,13 @@ classdef Yumi < RobotBaseClass
         function self = Yumi(baseTr)
 			self.CreateModel();
             if nargin < 1			
-				% baseTr = transl(1.5, 2.6 ,1.0);
-                baseTr = eye(4);
+				baseTr = transl(1.5, 2.6 ,1.0);
+                % baseTr = eye(4);
             end
             self.model.base = self.model.base.T * baseTr;
                         
-            self.PlotAndColourRobot();
-            % self.model.teach();  
+            % self.PlotAndColourRobot();
+            self.model.plot(self.q0);  
         end
 
 %% CreateModel

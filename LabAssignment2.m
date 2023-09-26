@@ -5,7 +5,15 @@ classdef LabAssignment2 < handle
     properties
         yumi;
         linearUR5;
-
+        objPlates;
+        plateCounter = 1;
+        yumiJointAngles;
+        yumiEnd;
+        yumiGriperOffset = 0.06
+        safeOffset = 0.3;
+        ur5JointAngles;
+        ur5End;
+        ur5GriperOffset = 0.06
     end
     
     methods
@@ -17,8 +25,8 @@ classdef LabAssignment2 < handle
             hold on
             self.initialiseRobots();
             self.initialiseEnvironment();
-            % self.initialisePlates();
-            % self.runRobot();            
+            self.initialisePlates();
+            self.runRobot();            
 
         end
         
@@ -29,6 +37,10 @@ classdef LabAssignment2 < handle
 
         function initialiseEnvironment(self)
             Environment(); % Build the workspace for the robot
+        end
+
+        function initialisePlates(self)
+            self.objPlates = Plates(); % plot the plates in the workspace
         end
 
         function runRobot(self)                      
@@ -43,7 +55,12 @@ classdef LabAssignment2 < handle
             logData.Status{end+1} = 'Task Started';
             logData.Transform{end+1} = 'N/A';
 
-            %% ROBOT CODE GOES HERE %%
+            for i = 1:self.objPlates.numOfPlates
+                self.updateRobots();
+                self.moveToPos(self.objPlates.initialTargetTransforms{i})
+
+                self.plateCounter = self.plateCounter + 1;
+            end
         
             % Display a message indicating the end of the task
             disp('Task Completed Successfully');
@@ -53,7 +70,26 @@ classdef LabAssignment2 < handle
             logData.Transform{end+1} = 'N/A';
             % Save the log data
             save('logData.mat', 'logData');
+        end
 
+        function moveToPos(self, targetPos)
+            steps = 50;
+            finalT = targetPos * rpy2tr(0, 180, 0, 'deg');
+            finalT(3,4) = finalT(3,4) + self.yumiGriperOffset
+            startAngles = self.yumiJointAngles;
+            endAngles = self.yumi.model.ikcon(finalT, startAngles);
+            qMatrix = jtraj(startAngles, endAngles, steps)
+            for i = 1:length(qMatrix)
+                self.yumi.model.animate(qMatrix(i,:));
+                % pause(0.1);
+            end
+        end            
+
+        function updateRobots(self)
+            self.yumiJointAngles = self.yumi.model.getpos();
+            self.yumiEnd = self.yumi.model.fkine(self.yumiJointAngles);
+            self.ur5JointAngles = self.linearUR5.model.getpos();
+            self.ur5End = self.linearUR5.model.fkine(self.ur5JointAngles);
         end
     end
 end

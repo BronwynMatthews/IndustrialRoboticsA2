@@ -14,7 +14,7 @@ classdef Environment < handle
             axis([-5 5 -5 5 0 2.2]);
             % hold on
 
-            [f,v,data] = plyread('Kitchen4.ply','tri');
+            [f,v,data] = plyread('Kitchen.ply','tri');
             % Scale the colours to be 0-to-1 (they are originally 0-to-255
             vertexColours = [data.vertex.red, data.vertex.green, data.vertex.blue] / 255;
             % Then plot the trisurf

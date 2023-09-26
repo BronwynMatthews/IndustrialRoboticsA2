@@ -17,6 +17,7 @@ classdef LabAssignment2 < handle
             hold on
             self.initialiseRobots();
             self.initialiseEnvironment();
+            % self.initialisePlates();
             % self.runRobot();            
 
         end

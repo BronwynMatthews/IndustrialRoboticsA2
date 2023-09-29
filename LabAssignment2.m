@@ -126,8 +126,9 @@ classdef LabAssignment2 < handle
             for i = 1:length(cartesianPath)
                 cartesianPath(i,:)
                 t = transl(cartesianPath(i,:)) * rpy;
-                yumiAngles = self.yumi.model.ikunc(t, self.yumiJointAngles);
+                yumiAngles = self.yumi.model.ikcon(t, self.yumiJointAngles);
                 self.yumi.model.animate(yumiAngles);
+                drawnow();
                 realXYZ = self.yumi.model.fkine(yumiAngles).T;
                 realXYZ = realXYZ(1:3,4)'
                 self.updateRobots();

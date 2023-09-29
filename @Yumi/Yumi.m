@@ -9,7 +9,7 @@ classdef Yumi < RobotBaseClass
         function self = Yumi(baseTr)
 			self.CreateModel();
             if nargin < 1			
-				baseTr = transl(1.5, 2.7, 1.0);
+				baseTr = transl(1.6, 2.75, 1.0);
                 % baseTr = eye(4);
             end
 

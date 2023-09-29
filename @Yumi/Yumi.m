@@ -1,7 +1,7 @@
 classdef Yumi < RobotBaseClass
     properties(Access = public)   
         plyFileNameStem = 'YuMi';
-        q0 = [pi,-pi/3,0,pi,0,0,0]
+        q0 = [0,-pi/3,0,pi,0,0,0]
     end
     
     methods
@@ -9,7 +9,7 @@ classdef Yumi < RobotBaseClass
         function self = Yumi(baseTr)
 			self.CreateModel();
             if nargin < 1			
-				baseTr = transl(1.5, 2.6 ,1.0);
+				baseTr = transl(1.5, 2.7, 1.0);
                 % baseTr = eye(4);
             end
             self.model.base = self.model.base.T * baseTr;

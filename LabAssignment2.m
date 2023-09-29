@@ -44,6 +44,7 @@ classdef LabAssignment2 < handle
 
         function runRobot(self)                      
             input('Press enter to begin')
+            self.updateRobots();
         
             % Initialise log variable
             logData = struct('Time', [], 'Status', [], 'Transform', []); % Create the logData Structure
@@ -83,7 +84,7 @@ classdef LabAssignment2 < handle
 
         function moveToPos(self)
             self.updateRobots();
-            steps = 50;
+            steps = 10;
             switch self.yumiState
                 case 1
                     disp('CASE 1')
@@ -124,19 +125,21 @@ classdef LabAssignment2 < handle
             cartesianPath = self.calculateMidpoints(robotXYZ, targetXYZ, steps);
 
             for i = 1:length(cartesianPath)
-                cartesianPath(i,:)
                 t = transl(cartesianPath(i,:)) * rpy;
                 yumiAngles = self.yumi.model.ikcon(t, self.yumiJointAngles);
                 self.yumi.model.animate(yumiAngles);
+                if self.yumiState == 3 || self.yumiState == 4 || self.yumiState == 5
+                    self.movePlates();
+                end
                 drawnow();
-                realXYZ = self.yumi.model.fkine(yumiAngles).T;
-                realXYZ = realXYZ(1:3,4)'
                 self.updateRobots();
                 % pause(0.1);
             end
 
-            disp(['distance from target = ', num2str(norm(realXYZ - targetXYZ)*1000), 'mm'])
+            realXYZ = self.yumi.model.fkine(yumiAngles).T;
+            realXYZ = realXYZ(1:3,4)'
 
+            disp(['distance from target = ', num2str(norm(realXYZ - targetXYZ)*1000), 'mm'])
         end
 
         function cartesianPath = calculateMidpoints(self, robotXYZ, targetXYZ, steps)
@@ -175,6 +178,20 @@ classdef LabAssignment2 < handle
             self.yumiEnd = self.yumi.model.fkine(self.yumiJointAngles);
             self.ur5JointAngles = self.linearUR5.model.getpos();
             self.ur5End = self.linearUR5.model.fkine(self.ur5JointAngles);
+        end
+
+        function movePlates(self)
+            mesh_h = self.objPlates.plateHandles(self.plateCounter);
+            vertices = get(mesh_h, 'Vertices');
+            angles = self.yumi.model.getpos()
+            tr = self.yumi.model.fkine(angles)
+            % transformedVertices = [vertices,ones(size(vertices,1),1)] * tr.T';
+            % transformedVertices(:,1) = transformedVertices(:,1) * -1;
+            % transformedVertices(:,3) = transformedVertices(:,3) * -1;
+            transformedVertices = [tr(1:3,1:3) * vertices(:,1:3)' + tr(1:3,4)]'
+            disp(['plate initial vertex = ', num2str(vertices(1,:)), ' tranformed vertex =  ', num2str(transformedVertices(1,:))])
+            set(mesh_h,'Vertices',transformedVertices(:,1:3));
+            drawnow();
         end
     end
 end

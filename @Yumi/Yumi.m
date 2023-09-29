@@ -15,11 +15,11 @@ classdef Yumi < RobotBaseClass
 
             self.model.base = self.model.base.T * baseTr;
             
-            self.PlotAndColourRobot();
+            % self.PlotAndColourRobot();
 
             % self.model.teach(q0)
            
-            % self.model.plot(self.q0);  
+            self.model.plot(self.q0);  
         end
 
 %% CreateModel

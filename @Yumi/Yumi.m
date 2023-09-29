@@ -1,7 +1,7 @@
 classdef Yumi < RobotBaseClass
     properties(Access = public)   
         plyFileNameStem = 'YuMi';
-        q0 = [0,-pi/3,0,pi,0,0,0]
+        q0 = [pi,-pi/3,0,pi,0,0,0]
     end
     
     methods

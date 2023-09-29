@@ -5,7 +5,10 @@ classdef Plates < handle
         numOfPlates;
         plateHandles;
         initialTargetTransforms;
+        safeInitialTargetTransforms;
         finalTargetTransforms;
+        safeFinalTargetTransforms;
+        safeOffset = 0.3;
     end
     
     methods
@@ -22,14 +25,14 @@ classdef Plates < handle
 
         function platePositions(self)
             self.plates = {
-                [1.90, 2.30, 1.0];
+                [1.90, 2.40, 1.0];
                 [1.90, 2.45, 1.0]; 
-                [1.90, 2.60, 1.0];
-                [1.90, 2.75, 1.0];
-                [2.05, 2.30, 1.0]; 
+                [1.90, 2.50, 1.0];
+                [1.90, 2.55, 1.0];
+                [2.05, 2.40, 1.0]; 
                 [2.05, 2.45, 1.0];
-                [2.05, 2.60, 1.0]; 
-                [2.05, 2.75, 1.0];
+                [2.05, 2.50, 1.0]; 
+                [2.05, 2.55, 1.0];
             };
 
             self.plateStack = {
@@ -48,26 +51,27 @@ classdef Plates < handle
             self.numOfPlates = length(self.plates);
             self.plateHandles = zeros(1, self.numOfPlates);
 
-            % Convert initial plate locations to target transforms
+            % Convert initial and final plate locations to target transforms
             self.initialTargetTransforms = cell(size(self.plates));
-            for i = 1:self.numOfPlates
-                translation = self.plates{i}(1:3);
-
-                % Create the homogeneous transformation matrix
-                t = transl(translation);
-
-                self.initialTargetTransforms{i} = t;
-            end
-
-            % Convert final plate locations to target transforms
+            self.safeInitialTargetTransforms = cell(size(self.plates));
             self.finalTargetTransforms = cell(size(self.plates));
-            for i = 1:self.numOfPlates             
-                translation = self.plateStack{i}(1:3);
+            self.safeFinalTargetTransforms = cell(size(self.plates));
+
+            for i = 1:self.numOfPlates
+                translationInitial = self.plates{i}(1:3);
+                translationFinal = self.plateStack{i}(1:3);
 
                 % Create the homogeneous transformation matrix
-                t = transl(translation);
+                tInitial = transl(translationInitial);
+                tFinal = transl(translationFinal);
 
-                self.finalTargetTransforms{i} = t;
+                self.initialTargetTransforms{i} = tInitial;
+                self.safeInitialTargetTransforms{i} = tInitial;
+                self.safeInitialTargetTransforms{i}(3,4) = self.safeInitialTargetTransforms{i}(3,4) + self.safeOffset;
+
+                self.finalTargetTransforms{i} = tFinal;
+                self.safeFinalTargetTransforms{i} = tFinal;
+                self.safeFinalTargetTransforms{i}(3,4) = self.safeFinalTargetTransforms{i}(3,4) + self.safeOffset;
             end
 
             % Loop through each plate location and place a plate there

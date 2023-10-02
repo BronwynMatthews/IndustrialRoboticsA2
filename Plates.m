@@ -21,6 +21,8 @@ classdef Plates < handle
             %     pause(0.5);
             % end
             self.placePlates();
+            self.plateStacker();
+
         end
 
         function platePositions(self)
@@ -90,6 +92,21 @@ classdef Plates < handle
                 verts = verts(:, 1:3) + xyz;  % Translate back to original position
                 set(h, 'Vertices', verts);
             end
+
         end
+
+        function plateStacker(self)
+            initialPlace = [1.3, 2.5, 0.95];
+            
+            p = PlaceObject('plateStacker.ply', initialPlace);
+
+            % Unsure if below is required as it sets verts?? Left it in
+            % incase
+            % verts = get(p, 'Vertices');
+            % verts = verts - initialPlace;  % Translate to origin
+            % verts = verts(:, 1:3) + initialPlace;  % Translate back to original position
+            % set(p, 'Vertices', verts);
+        end
+
     end
 end

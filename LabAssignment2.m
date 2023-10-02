@@ -31,6 +31,8 @@ classdef LabAssignment2 < handle
         
         function initialiseRobots(self)
             self.yumi = Yumi;
+
+            %%  below change to the new linear ur5 (with gripper attachment
             self.linearUR5 = LinearUR5;
         end
 
@@ -185,10 +187,17 @@ classdef LabAssignment2 < handle
             vertices = get(mesh_h, 'Vertices');
             angles = self.yumi.model.getpos()
             tr = self.yumi.model.fkine(angles)
-            % transformedVertices = [vertices,ones(size(vertices,1),1)] * tr.T';
-            % transformedVertices(:,1) = transformedVertices(:,1) * -1;
-            % transformedVertices(:,3) = transformedVertices(:,3) * -1;
-            transformedVertices = [tr(1:3,1:3) * vertices(:,1:3)' + tr(1:3,4)]'
+            transformedVertices = [vertices,ones(size(vertices,1),1)] * tr.T';
+            transformedVertices(:,1) = transformedVertices(:,1);
+            transformedVertices(:,3) = transformedVertices(:,3);
+
+            % I removed the negative 1 from the transformed vertices above
+            % transformedVertices = [tr(1:3,1:3) * vertices(:,1:3)' + tr(1:3,4)]'
+
+            % Strange method below
+            % rotatedVertices = tr(1:3,1:3) * vertices(:,1:3)';
+            % transformedVertices = bsxfun(@plus, rotatedVertices, tr(1:3,4));
+            
             disp(['plate initial vertex = ', num2str(vertices(1,:)), ' tranformed vertex =  ', num2str(transformedVertices(1,:))])
             set(mesh_h,'Vertices',transformedVertices(:,1:3));
             drawnow();

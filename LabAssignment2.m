@@ -14,6 +14,7 @@ classdef LabAssignment2 < handle
         ur5End;
         ur5GriperOffset = 0.06;
         yumiState;
+        currentPlateHandle = [];
     end
     
     methods
@@ -25,7 +26,8 @@ classdef LabAssignment2 < handle
             hold on
             self.initialiseRobots();
             self.initialiseEnvironment();
-            self.initialisePlates();
+            % self.initialisePlates();
+            plate = Plate([2.7, 2.0, 1.0]);
             self.runRobot();            
         end
         
@@ -60,6 +62,7 @@ classdef LabAssignment2 < handle
             for i = 1:self.objPlates.numOfPlates
                 disp(['YuMi unstacking plate ', num2str(i)])
                 self.yumiState = 1;
+                self.currentPlateHandle = self.objPlates.plateHandles(self.plateCounter);
                 for j = 1:6
                     % STATE 1 is Yumi moving to safe position above initial plate position (WITHOUT plate)
                     % STATE 2 is Yumi picking up plate from initial plate position
@@ -72,6 +75,7 @@ classdef LabAssignment2 < handle
                     self.yumiState = self.yumiState + 1;
                 end
                 self.plateCounter = self.plateCounter + 1;
+                self.currentPlateHandle = [];
             end
         
             % Display a message indicating the end of the task
@@ -183,7 +187,8 @@ classdef LabAssignment2 < handle
         end
 
         function movePlates(self)
-            mesh_h = self.objPlates.plateHandles(self.plateCounter);
+
+            self.currentPlateHandle = self.objPlates.plateHandles(self.plateCounter)
             vertices = get(mesh_h, 'Vertices');
             angles = self.yumi.model.getpos()
             tr = self.yumi.model.fkine(angles)
@@ -197,10 +202,17 @@ classdef LabAssignment2 < handle
             % Strange method below
             % rotatedVertices = tr(1:3,1:3) * vertices(:,1:3)';
             % transformedVertices = bsxfun(@plus, rotatedVertices, tr(1:3,4));
-            
+
             disp(['plate initial vertex = ', num2str(vertices(1,:)), ' tranformed vertex =  ', num2str(transformedVertices(1,:))])
             set(mesh_h,'Vertices',transformedVertices(:,1:3));
-            drawnow();
+
+            % if ~isempty(self.currentPlateHandle)
+            %     delete(self.currentPlateHandle)
+            % end
+            % 
+            % self.currentPlateHandle = PlaceObject('plateRed.ply', self.yumiEnd);
+            % 
+            % drawnow();
         end
     end
 end

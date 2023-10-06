@@ -51,7 +51,7 @@ classdef Plates < handle
 
         function placePlates(self)
             self.numOfPlates = length(self.plates);
-            self.plateHandles = zeros(1, self.numOfPlates);
+            % self.plateHandles = zeros(1, self.numOfPlates);
 
             % Convert initial and final plate locations to target transforms
             self.initialTargetTransforms = cell(size(self.plates));
@@ -86,11 +86,11 @@ classdef Plates < handle
                 self.plateHandles(i) = h;
 
                 % Translate to origin, rotate, then translate back
-                verts = get(h, 'Vertices');
-                verts = verts - xyz;  % Translate to origin
-                verts = [verts, ones(size(verts, 1), 1)] * trotx(pi/2);  % Rotate the plates to stand vertically
-                verts = verts(:, 1:3) + xyz;  % Translate back to original position
-                set(h, 'Vertices', verts);
+                % verts = get(h, 'Vertices');
+                % verts = verts - xyz;  % Translate to origin
+                % verts = [verts, ones(size(verts, 1), 1)] * trotx(pi/2);  % Rotate the plates to stand vertically
+                % verts = verts(:, 1:3) + xyz;  % Translate back to original position
+                % set(h, 'Vertices', verts);
             end
 
         end

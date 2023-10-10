@@ -1,6 +1,10 @@
-classdef Plates < handle
+classdef InitialisePlates < handle
     properties(Access = public)
         plates;
+        plateLocations;
+        redPos;
+        bluePos;
+        greenPos;
         plateStack;
         numOfPlates;
         plateHandles;
@@ -12,7 +16,7 @@ classdef Plates < handle
     end
     
     methods
-        function self = Plates()
+        function self = InitialisePlates()
             self.platePositions();
             % self.guiObj = GUI(self.bricks, self.brickWall);
             % f = self.guiObj.UIFigure;
@@ -26,11 +30,12 @@ classdef Plates < handle
         end
 
         function platePositions(self)
-            self.plates = {
+            self.plateLocations = {
                 [1.90, 2.40, 1.00];
                 [1.90, 2.45, 1.00]; 
                 [1.90, 2.50, 1.00];
                 [1.90, 2.55, 1.00];
+                [1.90, 2.60, 1.00];
                 [2.05, 2.55, 1.00]; 
                 [2.05, 2.60, 1.00];
                 [2.05, 2.65, 1.00]; 
@@ -46,21 +51,22 @@ classdef Plates < handle
                 [1.3, 2.9 1.02];
                 [1.3, 2.9 1.00];
                 [1.3, 2.9 1.01];
+                [1.3, 2.9 1.02];
             };
         end
 
         function placePlates(self)
-            self.numOfPlates = length(self.plates);
+            self.numOfPlates = length(self.plateLocations);
             % self.plateHandles = zeros(1, self.numOfPlates);
 
             % Convert initial and final plate locations to target transforms
-            self.initialTargetTransforms = cell(size(self.plates));
-            self.safeInitialTargetTransforms = cell(size(self.plates));
-            self.finalTargetTransforms = cell(size(self.plates));
-            self.safeFinalTargetTransforms = cell(size(self.plates));
+            self.initialTargetTransforms = cell(size(self.plateLocations));
+            self.safeInitialTargetTransforms = cell(size(self.plateLocations));
+            self.finalTargetTransforms = cell(size(self.plateLocations));
+            self.safeFinalTargetTransforms = cell(size(self.plateLocations));
 
             for i = 1:self.numOfPlates
-                translationInitial = self.plates{i}(1:3);
+                translationInitial = self.plateLocations{i}(1:3);
                 translationFinal = self.plateStack{i}(1:3);
 
                 % Create the homogeneous transformation matrix
@@ -77,22 +83,38 @@ classdef Plates < handle
             end
 
             % Loop through each plate location and place a plate there
-            for i = 1:length(self.plates)
-                % Retrieve the 1x6 array from the cell
-                xyz = self.plates{i}(1:3);
+            % for i = 1:length(self.plateLocations)
+            %     % Retrieve the 1x6 array from the cell
+            %     xyz = self.plateLocations{i}(1:3)
+            % 
+            %     % Place the plate at the specified location
+            %     % h = PlaceObject('plateRed.ply', xyz);
+            %     % self.plateHandles(i) = h;
+            % 
+            %     % Translate to origin, rotate, then translate back
+            %     % verts = get(h, 'Vertices');
+            %     % verts = verts - xyz;  % Translate to origin
+            %     % verts = [verts, ones(size(verts, 1), 1)] * trotx(pi/2);  % Rotate the plates to stand vertically
+            %     % verts = verts(:, 1:3) + xyz;  % Translate back to original position
+            %     % set(h, 'Vertices', verts);
+            % 
+            %     self.plates{i} = Plate(xyz)
+            % 
+            % end
+            plateNum = 1;
 
-                % Place the plate at the specified location
-                h = PlaceObject('plateRed.ply', xyz);
-                self.plateHandles(i) = h;
-
-                % Translate to origin, rotate, then translate back
-                % verts = get(h, 'Vertices');
-                % verts = verts - xyz;  % Translate to origin
-                % verts = [verts, ones(size(verts, 1), 1)] * trotx(pi/2);  % Rotate the plates to stand vertically
-                % verts = verts(:, 1:3) + xyz;  % Translate back to original position
-                % set(h, 'Vertices', verts);
+            for i = 1:3
+                for j = 1:3
+                    if i == 1
+                        self.redPos{j} = self.plateLocations{plateNum}(1:3);
+                    elseif i == 2
+                        self.bluePos{j} = self.plateLocations{plateNum}(1:3);
+                    elseif i == 3
+                        self.greenPos{j} = self.plateLocations{plateNum}(1:3);
+                    end
+                    plateNum = plateNum + 1;
+                end
             end
-
         end
 
         function plateStacker(self)

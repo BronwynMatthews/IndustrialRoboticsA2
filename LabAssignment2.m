@@ -6,6 +6,9 @@ classdef LabAssignment2 < handle
         yumi;
         linearUR5;
         objPlates;
+        redPlates;
+        bluePlates;
+        greenPlates;
         plateCounter = 1;
         yumiJointAngles;
         yumiEnd;
@@ -14,7 +17,6 @@ classdef LabAssignment2 < handle
         ur5End;
         ur5GriperOffset = 0.06;
         yumiState;
-        currentPlateHandle = [];
     end
     
     methods
@@ -24,11 +26,10 @@ classdef LabAssignment2 < handle
             clc;
 
             hold on
-            self.initialiseRobots();
+            % self.initialiseRobots();
             self.initialiseEnvironment();
-            % self.initialisePlates();
-            plate = Plate([2.7, 2.0, 1.0]);
-            self.runRobot();            
+            self.initialisePlates();
+            % self.runRobot();            
         end
         
         function initialiseRobots(self)
@@ -43,7 +44,17 @@ classdef LabAssignment2 < handle
         end
 
         function initialisePlates(self)
-            self.objPlates = Plates(); % plot the plates in the workspace
+            self.objPlates = InitialisePlates(); % plot the plates in the workspace
+
+            for i = 1:3
+                redXYZ = transl(self.objPlates.redPos{i})
+                blueXYZ = transl(self.objPlates.bluePos{i})
+                greenXYZ = transl(self.objPlates.greenPos{i})
+
+                self.redPlates{i} = Plate(redXYZ, 'red');
+                self.bluePlates{i} = Plate(blueXYZ, 'blue');
+                self.greenPlates{i} = Plate(greenXYZ, 'green');
+            end
         end
 
         function runRobot(self)                      
@@ -62,7 +73,6 @@ classdef LabAssignment2 < handle
             for i = 1:self.objPlates.numOfPlates
                 disp(['YuMi unstacking plate ', num2str(i)])
                 self.yumiState = 1;
-                self.currentPlateHandle = self.objPlates.plateHandles(self.plateCounter);
                 for j = 1:6
                     % STATE 1 is Yumi moving to safe position above initial plate position (WITHOUT plate)
                     % STATE 2 is Yumi picking up plate from initial plate position
@@ -75,7 +85,6 @@ classdef LabAssignment2 < handle
                     self.yumiState = self.yumiState + 1;
                 end
                 self.plateCounter = self.plateCounter + 1;
-                self.currentPlateHandle = [];
             end
         
             % Display a message indicating the end of the task
@@ -135,7 +144,7 @@ classdef LabAssignment2 < handle
                 yumiAngles = self.yumi.model.ikcon(t, self.yumiJointAngles);
                 self.yumi.model.animate(yumiAngles);
                 if self.yumiState == 3 || self.yumiState == 4 || self.yumiState == 5
-                    self.movePlates();
+                    % self.movePlates();
                 end
                 drawnow();
                 self.updateRobots();

@@ -9,7 +9,7 @@ classdef LabAssignment2 < handle
         plateCounter = 1;
         yumiJointAngles;
         yumiEnd;
-        yumiGriperOffset = 0.1;
+        yumiGriperOffset = 0.2;
         ur5JointAngles;
         ur5End;
         ur5GriperOffset = 0.06;

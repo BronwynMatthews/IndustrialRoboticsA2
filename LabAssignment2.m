@@ -6,9 +6,6 @@ classdef LabAssignment2 < handle
         yumi;
         linearUR5;
         objPlates;
-        redPlates;
-        bluePlates;
-        greenPlates;
         plateCounter = 1;
         yumiJointAngles;
         yumiEnd;
@@ -17,6 +14,9 @@ classdef LabAssignment2 < handle
         ur5End;
         ur5GriperOffset = 0.06;
         yumiState;
+        plates;
+        plateModel;
+        plateJoints = [0,0];
     end
     
     methods
@@ -26,10 +26,10 @@ classdef LabAssignment2 < handle
             clc;
 
             hold on
-            % self.initialiseRobots();
+            self.initialiseRobots();
             self.initialiseEnvironment();
             self.initialisePlates();
-            % self.runRobot();            
+            self.runRobot();            
         end
         
         function initialiseRobots(self)
@@ -46,14 +46,21 @@ classdef LabAssignment2 < handle
         function initialisePlates(self)
             self.objPlates = InitialisePlates(); % plot the plates in the workspace
 
+            plateNum = 1;
             for i = 1:3
-                redXYZ = transl(self.objPlates.redPos{i})
-                blueXYZ = transl(self.objPlates.bluePos{i})
-                greenXYZ = transl(self.objPlates.greenPos{i})
-
-                self.redPlates{i} = Plate(redXYZ, 'red');
-                self.bluePlates{i} = Plate(blueXYZ, 'blue');
-                self.greenPlates{i} = Plate(greenXYZ, 'green');
+                for j = 1:3
+                    baseTr = self.objPlates.initialTargetTransforms{plateNum};
+                    switch i
+                        case 1
+                            colour = 'red';
+                        case 2
+                            colour = 'blue';
+                        case 3
+                            colour = 'green';
+                    end
+                    self.plates{plateNum} = Plate(baseTr, colour);
+                    plateNum = plateNum + 1;
+                end
             end
         end
 
@@ -73,6 +80,7 @@ classdef LabAssignment2 < handle
             for i = 1:self.objPlates.numOfPlates
                 disp(['YuMi unstacking plate ', num2str(i)])
                 self.yumiState = 1;
+                self.plateModel = self.plates{self.plateCounter};
                 for j = 1:6
                     % STATE 1 is Yumi moving to safe position above initial plate position (WITHOUT plate)
                     % STATE 2 is Yumi picking up plate from initial plate position
@@ -135,7 +143,7 @@ classdef LabAssignment2 < handle
 
             robotXYZ = self.yumiEnd.T; 
             robotXYZ = robotXYZ(1:3,4)';
-            targetXYZ = targetPos(1:3,4)'
+            targetXYZ = targetPos(1:3,4)';
             
             cartesianPath = self.calculateMidpoints(robotXYZ, targetXYZ, steps);
 
@@ -143,16 +151,16 @@ classdef LabAssignment2 < handle
                 t = transl(cartesianPath(i,:)) * rpy;
                 yumiAngles = self.yumi.model.ikcon(t, self.yumiJointAngles);
                 self.yumi.model.animate(yumiAngles);
+                self.updateRobots();
                 if self.yumiState == 3 || self.yumiState == 4 || self.yumiState == 5
-                    % self.movePlates();
+                    self.movePlates();
                 end
                 drawnow();
-                self.updateRobots();
                 % pause(0.1);
             end
 
             realXYZ = self.yumi.model.fkine(yumiAngles).T;
-            realXYZ = realXYZ(1:3,4)'
+            realXYZ = realXYZ(1:3,4)';
 
             disp(['distance from target = ', num2str(norm(realXYZ - targetXYZ)*1000), 'mm'])
         end
@@ -196,32 +204,15 @@ classdef LabAssignment2 < handle
         end
 
         function movePlates(self)
-
-            self.currentPlateHandle = self.objPlates.plateHandles(self.plateCounter)
-            vertices = get(mesh_h, 'Vertices');
-            angles = self.yumi.model.getpos()
-            tr = self.yumi.model.fkine(angles)
-            transformedVertices = [vertices,ones(size(vertices,1),1)] * tr.T';
-            transformedVertices(:,1) = transformedVertices(:,1);
-            transformedVertices(:,3) = transformedVertices(:,3);
-
-            % I removed the negative 1 from the transformed vertices above
-            % transformedVertices = [tr(1:3,1:3) * vertices(:,1:3)' + tr(1:3,4)]'
-
-            % Strange method below
-            % rotatedVertices = tr(1:3,1:3) * vertices(:,1:3)';
-            % transformedVertices = bsxfun(@plus, rotatedVertices, tr(1:3,4));
-
-            disp(['plate initial vertex = ', num2str(vertices(1,:)), ' tranformed vertex =  ', num2str(transformedVertices(1,:))])
-            set(mesh_h,'Vertices',transformedVertices(:,1:3));
-
-            % if ~isempty(self.currentPlateHandle)
-            %     delete(self.currentPlateHandle)
-            % end
-            % 
-            % self.currentPlateHandle = PlaceObject('plateRed.ply', self.yumiEnd);
-            % 
-            % drawnow();
+            platePos = self.yumiEnd.T;
+            platePos(3,4) = platePos(3,4) - self.yumiGriperOffset;
+            if self.yumiState == 5
+                platePos(3,4) = platePos(3,4) - 0.05;
+                self.plateModel.model.base = platePos * troty(-pi/2);
+            else
+                self.plateModel.model.base = platePos * trotx(-pi/2);
+            end
+            animate(self.plateModel.model, self.plateJoints)
         end
     end
 end

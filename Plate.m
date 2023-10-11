@@ -21,9 +21,7 @@ classdef Plate < RobotBaseClass
             elseif strcmp(colour,'green')
                 self.plyFileNameStem = 'plateGreen';
             end
-            
-            disp(self.plyFileNameStem);
-
+           
             self.PlotAndColourRobot();    
             
         end

@@ -43,21 +43,20 @@ classdef InitialisePlates < handle
             };
 
             self.plateStack = {
-                [1.3, 2.5 1.00];
-                [1.3, 2.5 1.01];
-                [1.3, 2.5 1.02];
-                [1.2, 2.7 1.00];
-                [1.2, 2.7 1.01];
-                [1.3, 2.9 1.02];
-                [1.3, 2.9 1.00];
-                [1.3, 2.9 1.01];
-                [1.3, 2.9 1.02];
+                [1.3, 2.5 1.05];
+                [1.3, 2.5 1.06];
+                [1.3, 2.5 1.07];
+                [1.2, 2.7 1.05];
+                [1.2, 2.7 1.06];
+                [1.3, 2.9 1.07];
+                [1.3, 2.9 1.05];
+                [1.3, 2.9 1.06];
+                [1.3, 2.9 1.07];
             };
         end
 
         function placePlates(self)
             self.numOfPlates = length(self.plateLocations);
-            % self.plateHandles = zeros(1, self.numOfPlates);
 
             % Convert initial and final plate locations to target transforms
             self.initialTargetTransforms = cell(size(self.plateLocations));
@@ -81,44 +80,10 @@ classdef InitialisePlates < handle
                 self.safeFinalTargetTransforms{i} = tFinal;
                 self.safeFinalTargetTransforms{i}(3,4) = self.safeFinalTargetTransforms{i}(3,4) + self.safeOffset;
             end
-
-            % Loop through each plate location and place a plate there
-            % for i = 1:length(self.plateLocations)
-            %     % Retrieve the 1x6 array from the cell
-            %     xyz = self.plateLocations{i}(1:3)
-            % 
-            %     % Place the plate at the specified location
-            %     % h = PlaceObject('plateRed.ply', xyz);
-            %     % self.plateHandles(i) = h;
-            % 
-            %     % Translate to origin, rotate, then translate back
-            %     % verts = get(h, 'Vertices');
-            %     % verts = verts - xyz;  % Translate to origin
-            %     % verts = [verts, ones(size(verts, 1), 1)] * trotx(pi/2);  % Rotate the plates to stand vertically
-            %     % verts = verts(:, 1:3) + xyz;  % Translate back to original position
-            %     % set(h, 'Vertices', verts);
-            % 
-            %     self.plates{i} = Plate(xyz)
-            % 
-            % end
-            plateNum = 1;
-
-            for i = 1:3
-                for j = 1:3
-                    if i == 1
-                        self.redPos{j} = self.plateLocations{plateNum}(1:3);
-                    elseif i == 2
-                        self.bluePos{j} = self.plateLocations{plateNum}(1:3);
-                    elseif i == 3
-                        self.greenPos{j} = self.plateLocations{plateNum}(1:3);
-                    end
-                    plateNum = plateNum + 1;
-                end
-            end
         end
 
         function plateStacker(self)
-            initialPlace = [1.3, 2.5, 0.95];
+            initialPlace = [1.22, 2.57, 0.95];
             
             p = PlaceObject('plateStacker.ply', initialPlace);
 

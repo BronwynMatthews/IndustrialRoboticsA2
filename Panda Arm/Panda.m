@@ -9,8 +9,7 @@ classdef Panda < RobotBaseClass
 function self = Panda(baseTr)
 			self.CreateModel();
             if nargin < 1			
-				baseTr = transl(1.6, 2.75, 1.0);
-                % baseTr = eye(4);
+                baseTr = eye(4);
             end
 
             self.model.base = self.model.base.T * baseTr;

@@ -33,7 +33,7 @@ classdef LabAssignment2 < handle
         end
         
         function initialiseRobots(self)
-            self.panda = Panda;
+            self.panda = Panda(transl(1.5, 2.6, 1.0));
 
             %%  below change to the new linear ur5 (with gripper attachment
             self.linearUR5 = LinearUR5custom(transl(0.0,2.7,1.0));
@@ -131,12 +131,12 @@ classdef LabAssignment2 < handle
                     disp('CASE 5')
                     targetPos = self.objPlates.finalTargetTransforms{self.plateCounter};
                     steps = 10;
-                    rpy = rpy2tr(0, 90, -90, 'deg');
+                    rpy = rpy2tr(0, 90, 90, 'deg');
                 case 6
                     disp('CASE 6')
                     targetPos = self.objPlates.safeFinalTargetTransforms{self.plateCounter};
                     steps = 10;
-                    rpy = rpy2tr(0, 90, -90, 'deg');
+                    rpy = rpy2tr(0, 90, 90, 'deg');
             end
 
             targetPos(3,4) = targetPos(3,4) + self.pandaGriperOffset;

@@ -43,15 +43,15 @@ classdef InitialisePlates < handle
             };
 
             self.plateStack = {
-                [1.3, 2.5 1.05];
-                [1.3, 2.5 1.06];
-                [1.3, 2.5 1.07];
-                [1.1, 2.7 1.05];
-                [1.1, 2.7 1.06];
-                [1.3, 2.9 1.07];
-                [1.3, 2.9 1.05];
-                [1.3, 2.9 1.06];
-                [1.3, 2.9 1.07];
+                [1.1, 2.9, 1.05];
+                [1.1, 2.9, 1.06];
+                [1.1, 2.9, 1.07];
+                [1.1, 2.6, 1.05];
+                [1.1, 2.6, 1.06];
+                [1.1, 2.6, 1.07];
+                [1.1, 2.3, 1.05];
+                [1.1, 2.3, 1.06];
+                [1.1, 2.3, 1.07];
             };
         end
 
@@ -78,7 +78,7 @@ classdef InitialisePlates < handle
 
                 self.finalTargetTransforms{i} = tFinal;
                 self.safeFinalTargetTransforms{i} = tFinal;
-                self.finalTargetTransforms{i}(3,4) = self.finalTargetTransforms{i}(3,4) - 0.24;
+                self.finalTargetTransforms{i}(3,4) = self.finalTargetTransforms{i}(3,4) - 0.1;
                 self.safeFinalTargetTransforms{i}(3,4) = self.safeFinalTargetTransforms{i}(3,4) + self.safeOffset;
             end
         end

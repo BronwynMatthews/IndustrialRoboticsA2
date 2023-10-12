@@ -1,6 +1,7 @@
 classdef LabAssignment2 < handle
     %LABASSIGNMENT2 Summary of this class goes here
     %   Detailed explanation goes here
+    % Check
     
     properties
         panda;

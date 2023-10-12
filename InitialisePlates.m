@@ -46,8 +46,8 @@ classdef InitialisePlates < handle
                 [1.3, 2.5 1.05];
                 [1.3, 2.5 1.06];
                 [1.3, 2.5 1.07];
-                [1.2, 2.7 1.05];
-                [1.2, 2.7 1.06];
+                [1.1, 2.7 1.05];
+                [1.1, 2.7 1.06];
                 [1.3, 2.9 1.07];
                 [1.3, 2.9 1.05];
                 [1.3, 2.9 1.06];
@@ -78,12 +78,13 @@ classdef InitialisePlates < handle
 
                 self.finalTargetTransforms{i} = tFinal;
                 self.safeFinalTargetTransforms{i} = tFinal;
+                self.finalTargetTransforms{i}(3,4) = self.finalTargetTransforms{i}(3,4) - 0.24;
                 self.safeFinalTargetTransforms{i}(3,4) = self.safeFinalTargetTransforms{i}(3,4) + self.safeOffset;
             end
         end
 
         function plateStacker(self)
-            initialPlace = [1.22, 2.57, 0.95];
+            initialPlace = [1.225, 2.375, 0.95];
             
             p = PlaceObject('plateStacker.ply', initialPlace);
 

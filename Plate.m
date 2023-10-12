@@ -10,7 +10,8 @@ classdef Plate < RobotBaseClass
             self.CreateModel();
 
             if nargin < 1			
-				baseTr = eye(4);				
+				baseTr = eye(4);	
+    			colour = 'plateRed';
             end
             self.model.base = self.model.base.T * baseTr * trotz(pi/2) * troty(pi/2);
 

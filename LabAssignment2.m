@@ -131,12 +131,12 @@ classdef LabAssignment2 < handle
                     disp('CASE 5')
                     targetPos = self.objPlates.finalTargetTransforms{self.plateCounter};
                     steps = 10;
-                    rpy = rpy2tr(0, 90, 0, 'deg');
+                    rpy = rpy2tr(0, 90, -90, 'deg');
                 case 6
                     disp('CASE 6')
                     targetPos = self.objPlates.safeFinalTargetTransforms{self.plateCounter};
                     steps = 10;
-                    rpy = rpy2tr(0, 180, 0, 'deg');
+                    rpy = rpy2tr(0, 90, -90, 'deg');
             end
 
             targetPos(3,4) = targetPos(3,4) + self.yumiGriperOffset;
@@ -205,14 +205,22 @@ classdef LabAssignment2 < handle
 
         function movePlates(self)
             platePos = self.yumiEnd.T;
-            platePos(3,4) = platePos(3,4) - self.yumiGriperOffset;
+        
+            % Extract the current z-direction of the end effector
+            zDirection = platePos(1:3, 3);
+            
+            % Compute the offset in the global frame
+            globalOffset = zDirection * (self.yumiGriperOffset);
+            
+            % Apply the offset to the current position
+            platePos(1:3, 4) = platePos(1:3, 4) + globalOffset;
+        
             if self.yumiState == 5
-                platePos(3,4) = platePos(3,4) - 0.05;
                 self.plateModel.model.base = platePos * troty(-pi/2);
             else
                 self.plateModel.model.base = platePos * trotx(-pi/2);
             end
-            animate(self.plateModel.model, self.plateJoints)
+            animate(self.plateModel.model, self.plateJoints);
         end
     end
 end

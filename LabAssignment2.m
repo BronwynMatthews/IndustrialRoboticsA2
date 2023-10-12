@@ -3,17 +3,17 @@ classdef LabAssignment2 < handle
     %   Detailed explanation goes here
     
     properties
-        yumi;
+        panda;
         linearUR5;
         objPlates;
         plateCounter = 1;
-        yumiJointAngles;
-        yumiEnd;
-        yumiGriperOffset = 0.2;
+        pandaJointAngles;
+        pandaEnd;
+        pandaGriperOffset = 0.05; % RADIUS OF A PLATE
         ur5JointAngles;
         ur5End;
         ur5GriperOffset = 0.06;
-        yumiState;
+        pandaState;
         plates;
         plateModel;
         plateJoints = [0,0];
@@ -33,10 +33,10 @@ classdef LabAssignment2 < handle
         end
         
         function initialiseRobots(self)
-            self.yumi = Yumi;
+            self.panda = Panda;
 
             %%  below change to the new linear ur5 (with gripper attachment
-            self.linearUR5 = LinearUR5;
+            self.linearUR5 = LinearUR5custom(transl(0.0,2.7,1.0));
         end
 
         function initialiseEnvironment(self)
@@ -78,19 +78,19 @@ classdef LabAssignment2 < handle
             logData.Transform{end+1} = 'N/A';
 
             for i = 1:self.objPlates.numOfPlates
-                disp(['YuMi unstacking plate ', num2str(i)])
-                self.yumiState = 1;
+                disp(['Panda unstacking plate ', num2str(i)])
+                self.pandaState = 1;
                 self.plateModel = self.plates{self.plateCounter};
                 for j = 1:6
-                    % STATE 1 is Yumi moving to safe position above initial plate position (WITHOUT plate)
-                    % STATE 2 is Yumi picking up plate from initial plate position
-                    % STATE 3 is Yumi moving to safe position above initial plate position (WITH plate)
-                    % STATE 4 is Yumi moving to safe position above final plate position (WITH plate)
-                    % STATE 5 is Yumi placing plate in its final position
-                    % STATE 6 is Yumi moving to safe position above final plate position (WITHOUT plate)
+                    % STATE 1 is panda moving to safe position above initial plate position (WITHOUT plate)
+                    % STATE 2 is panda picking up plate from initial plate position
+                    % STATE 3 is panda moving to safe position above initial plate position (WITH plate)
+                    % STATE 4 is panda moving to safe position above final plate position (WITH plate)
+                    % STATE 5 is panda placing plate in its final position
+                    % STATE 6 is panda moving to safe position above final plate position (WITHOUT plate)
                     self.moveToPos();
 
-                    self.yumiState = self.yumiState + 1;
+                    self.pandaState = self.pandaState + 1;
                 end
                 self.plateCounter = self.plateCounter + 1;
             end
@@ -108,7 +108,7 @@ classdef LabAssignment2 < handle
         function moveToPos(self)
             self.updateRobots();
             steps = 10;
-            switch self.yumiState
+            switch self.pandaState
                 case 1
                     disp('CASE 1')
                     targetPos = self.objPlates.safeInitialTargetTransforms{self.plateCounter};
@@ -139,9 +139,9 @@ classdef LabAssignment2 < handle
                     rpy = rpy2tr(0, 90, -90, 'deg');
             end
 
-            targetPos(3,4) = targetPos(3,4) + self.yumiGriperOffset;
+            targetPos(3,4) = targetPos(3,4) + self.pandaGriperOffset;
 
-            robotXYZ = self.yumiEnd.T; 
+            robotXYZ = self.pandaEnd.T; 
             robotXYZ = robotXYZ(1:3,4)';
             targetXYZ = targetPos(1:3,4)';
             
@@ -149,17 +149,17 @@ classdef LabAssignment2 < handle
 
             for i = 1:length(cartesianPath)
                 t = transl(cartesianPath(i,:)) * rpy;
-                yumiAngles = self.yumi.model.ikcon(t, self.yumiJointAngles);
-                self.yumi.model.animate(yumiAngles);
+                pandaAngles = self.panda.model.ikcon(t, self.pandaJointAngles);
+                self.panda.model.animate(pandaAngles);
                 self.updateRobots();
-                if self.yumiState == 3 || self.yumiState == 4 || self.yumiState == 5
+                if self.pandaState == 3 || self.pandaState == 4 || self.pandaState == 5
                     self.movePlates();
                 end
                 drawnow();
                 % pause(0.1);
             end
 
-            realXYZ = self.yumi.model.fkine(yumiAngles).T;
+            realXYZ = self.panda.model.fkine(pandaAngles).T;
             realXYZ = realXYZ(1:3,4)';
 
             disp(['distance from target = ', num2str(norm(realXYZ - targetXYZ)*1000), 'mm'])
@@ -169,7 +169,7 @@ classdef LabAssignment2 < handle
             initialXYZ = robotXYZ; % Get the XYZ coordinates from the robots end effector position
             finalXYZ = targetXYZ; % Get the XYZ coordinates from the final position transformation matrix
 
-            if self.yumiState == 2 || self.yumiState == 3 || self.yumiState == 5 || self.yumiState == 6
+            if self.pandaState == 2 || self.pandaState == 3 || self.pandaState == 5 || self.pandaState == 6
                 % Interpolate between robotXYZ and targetXYZ
                 cartesianPath = zeros(steps, length(initialXYZ));
                 % Generate the path
@@ -197,25 +197,25 @@ classdef LabAssignment2 < handle
         end
 
         function updateRobots(self)
-            self.yumiJointAngles = self.yumi.model.getpos();
-            self.yumiEnd = self.yumi.model.fkine(self.yumiJointAngles);
+            self.pandaJointAngles = self.panda.model.getpos();
+            self.pandaEnd = self.panda.model.fkine(self.pandaJointAngles);
             self.ur5JointAngles = self.linearUR5.model.getpos();
             self.ur5End = self.linearUR5.model.fkine(self.ur5JointAngles);
         end
 
         function movePlates(self)
-            platePos = self.yumiEnd.T;
+            platePos = self.pandaEnd.T;
         
             % Extract the current z-direction of the end effector
             zDirection = platePos(1:3, 3);
             
             % Compute the offset in the global frame
-            globalOffset = zDirection * (self.yumiGriperOffset);
+            globalOffset = zDirection * (self.pandaGriperOffset);
             
             % Apply the offset to the current position
             platePos(1:3, 4) = platePos(1:3, 4) + globalOffset;
         
-            if self.yumiState == 5
+            if self.pandaState == 5
                 self.plateModel.model.base = platePos * troty(-pi/2);
             else
                 self.plateModel.model.base = platePos * trotx(-pi/2);

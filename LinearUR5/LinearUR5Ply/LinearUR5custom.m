@@ -1,4 +1,4 @@
-classdef LinearUR5 < RobotBaseClass
+classdef LinearUR5custom < RobotBaseClass
     %% LinearUR5 UR5 on a non-standard linear rail created by a student
 
     properties(Access = public)              
@@ -7,7 +7,7 @@ classdef LinearUR5 < RobotBaseClass
     
     methods
 %% Define robot Function 
-        function self = LinearUR5(baseTr)
+        function self = LinearUR5custom(baseTr)
 			self.CreateModel();
             if nargin < 1			
 				baseTr = eye(4);				

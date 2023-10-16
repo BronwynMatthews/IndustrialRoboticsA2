@@ -35,7 +35,7 @@ classdef LabAssignment2 < handle
         end
         
         function InitialiseRobots(self)
-            self.panda = Panda(transl(1.5, 2.6, 1.0));
+            self.panda = Panda(transl(1.6, 3.0, 1.0));
 
             %%  below change to the new linear ur5 (with gripper attachment
             self.linearUR5 = LinearUR5custom(transl(0.5,2.6,1.0));
@@ -149,24 +149,44 @@ classdef LabAssignment2 < handle
                     disp('CASE 5')
                     targetPos = self.objPlates.stackTargetTransforms{self.plateCounter};
                     steps = 10;
-                    rpy = rpy2tr(0, 90, 90, 'deg');
+                    rpy = rpy2tr(0, 90, 180, 'deg');
                 case 6
                     disp('CASE 6')
                     targetPos = self.objPlates.safeStackTargetTransforms{self.plateCounter};
                     steps = 10;
-                    rpy = rpy2tr(0, 90, 90, 'deg');
+                    rpy = rpy2tr(0, 90, 180, 'deg');
             end
 
             robotXYZ = self.pandaEnd.T; 
             robotXYZ = robotXYZ(1:3,4)';
             targetXYZ = targetPos(1:3,4)';
-            
-            cartesianPath = self.CalculateMidpoints(robotXYZ, targetXYZ, steps);
 
-            for i = 1:length(cartesianPath)
-                t = transl(cartesianPath(i,:)) * rpy;
-                pandaAngles = self.panda.model.ikcon(t, self.pandaJointAngles);
-                self.panda.model.animate(pandaAngles);
+            if self.pandaState == 2 || self.pandaState == 3 || self.pandaState == 5 || self.pandaState == 6
+                for i = 1:length(targetXYZ)
+                    cartesianPath(:, i) = linspace(robotXYZ(i), targetXYZ(i), steps);
+                end
+                for i = 1:length(cartesianPath)
+                    t = transl(cartesianPath(i,:)) * rpy;
+                    pandaAngles = self.panda.model.ikcon(t, self.pandaJointAngles);
+                    self.panda.model.animate(pandaAngles);
+                    self.UpdateRobots();
+                    if self.pandaState == 3 || self.pandaState == 4 || self.pandaState == 5
+                        self.MovePlates();
+                    end
+                    drawnow();
+                    % pause(0.1);
+                end
+
+            else
+                qFinal = self.panda.model.ikcon(targetPos * rpy, self.pandaJointAngles);
+                qMatrix = jtraj(self.pandaJointAngles, qFinal, steps);
+                self.AnimatePanda(qMatrix);
+            end
+        end
+
+        function AnimatePanda(self, qMatrix)
+            for i = 1:length(qMatrix)
+                self.panda.model.animate(qMatrix(i,:));
                 self.UpdateRobots();
                 if self.pandaState == 3 || self.pandaState == 4 || self.pandaState == 5
                     self.MovePlates();
@@ -174,48 +194,49 @@ classdef LabAssignment2 < handle
                 drawnow();
                 % pause(0.1);
             end
-
-            realXYZ = self.panda.model.fkine(pandaAngles).T;
-            realXYZ = realXYZ(1:3,4)';
-
-            disp(['distance from target = ', num2str(norm(realXYZ - targetXYZ)*1000), 'mm'])
         end
 
-        function CartesianPath = CalculateMidpoints(self, robotXYZ, targetXYZ, steps)
-            initialXYZ = robotXYZ; % Get the XYZ coordinates from the robots end effector position
-            finalXYZ = targetXYZ; % Get the XYZ coordinates from the final position transformation matrix
-
-            if self.pandaState == 2 || self.pandaState == 3 || self.pandaState == 5 || self.pandaState == 6
-                % Interpolate between robotXYZ and targetXYZ
-                CartesianPath = zeros(steps, length(initialXYZ));
-                % Generate the path
-                for i = 1:length(initialXYZ)
-                    CartesianPath(:, i) = linspace(initialXYZ(i), finalXYZ(i), steps);
-                end
-            else
-                CartesianPath = zeros(steps, 3);
-                midpoint = (initialXYZ + finalXYZ) / 2; % Calculate the midpoint between the initial and final positions
-                vec = finalXYZ - initialXYZ; % Calculate the vector from the initial to the final position
-                offset_distance = 0.75 - 0.25 * abs(midpoint(2)) / 1;  % Calculate the offset distance based on the Y coordinate of the midpoint
-                offset_distance = max(0.25, min(0.75, offset_distance));  % Ensure the offset distance is within a specific range
-                rotatedVec = [-vec(2), vec(1), 0]; % Create a vector rotated by 90 degrees in the XY plane
-                rotatedVec = offset_distance * rotatedVec / norm(rotatedVec); % Scale the rotated vector by the offset distance
-                crest = midpoint - rotatedVec;
-                % Generate the arc
-                for i = 1:steps
-                    t = (i - 1) / (steps - 1);  % Define a parameter t that linearly interpolates from 0 to 1
-                    oneMinusT = 1 - t; % Calculate (1 - t) for use in the Bezier curve formula
-                    % Use the formula for a quadratic Bezier curve to generate the arc
-                    bezier_t = oneMinusT^2 * initialXYZ + 2 * oneMinusT * t * crest + t^2 * finalXYZ; % Calculate the position on the Bezier curve at parameter t
-                    CartesianPath(i, :) = bezier_t; % Assign the calculated position to the Cartesian path matrix
-                end
-            end
-        end
+        % function path = generate_arc_path(self, start_xyz, target_xyz, base_xyz, steps)
+        %     % Input check
+        %     start_xyz
+        %     target_xyz
+        %     base_xyz
+        % 
+        %     % Initialize path
+        %     path = zeros(steps, length(start_xyz));
+        % 
+        %     % Check the state of 'panda'
+        %     if self.pandaState == 2 || self.pandaState == 3 || self.pandaState == 5 || self.pandaState == 6
+        %         for i = 1:length(target_xyz)
+        %             path(:, i) = linspace(start_xyz(i), target_xyz(i), steps);
+        %         end
+        %     else
+        %         % Calculate the midpoint of the line connecting start and target
+        %         midpoint = (start_xyz + target_xyz) / 2;
+        % 
+        %         % Determine the direction from base to the midpoint in the XY plane
+        %         direction_xy = [midpoint(1) - base_xyz(1), midpoint(2) - base_xyz(2)];
+        %         direction_xy = direction_xy / norm(direction_xy);
+        % 
+        %         % Find the crest point 0.5m away from the base in the XY plane direction and midpoint Z height
+        %         crest_xyz = [base_xyz(1:2) + 0.5 * direction_xy, midpoint(3)]
+        % 
+        %         % Linearly interpolate from start to crest and from crest to target
+        %         first_half = zeros(ceil(steps/2), 3);
+        %         second_half = zeros(floor(steps/2), 3);
+        %         for i = 1:length(start_xyz)
+        %             first_half(:, i) = linspace(start_xyz(i), crest_xyz(i), ceil(steps/2));
+        %             second_half(:, i) = linspace(crest_xyz(i), target_xyz(i), floor(steps/2));
+        %         end
+        % 
+        %         path = [first_half; second_half(2:end, :)];  % Concatenate to avoid repeating the crest value
+        %     end
+        % end
 
         function MoveUR5(self, stack)
-            stack
             targetTransforms = cell(7);
             targetTransforms{1} = self.objPlates.stackTargetTransforms{stack} * rpy2tr(0, 90, 0, 'deg');
+            targetTransforms{1}(1,4) = targetTransforms{1}(1,4) - 0.2;
             targetTransforms{2} = targetTransforms{1};
             targetTransforms{4} = targetTransforms{1};
             targetTransforms{1}(1,4) = targetTransforms{1}(1,4) - 0.1;
@@ -241,7 +262,7 @@ classdef LabAssignment2 < handle
 
         function SplitAnimation(self, qMatrixPanda, qMatrixUR5)
             for i = 1:length(qMatrixPanda)
-                q = qMatrixPanda()
+                q = qMatrixPanda();
             end
         end
 

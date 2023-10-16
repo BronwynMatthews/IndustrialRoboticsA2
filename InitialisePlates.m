@@ -2,6 +2,7 @@ classdef InitialisePlates < handle
     properties(Access = public)
         plates;
         plateLocations;
+        plateFinal;
         redPos;
         bluePos;
         greenPos;
@@ -10,6 +11,8 @@ classdef InitialisePlates < handle
         plateHandles;
         initialTargetTransforms;
         safeInitialTargetTransforms;
+        stackTargetTransforms;
+        safeStackTargetTransforms;
         finalTargetTransforms;
         safeFinalTargetTransforms;
         safeOffset = 0.3;
@@ -53,6 +56,19 @@ classdef InitialisePlates < handle
                 [1.15, 2.4, 1.06];
                 [1.15, 2.4, 1.07];
             };
+
+            self.plateFinal = {
+                [-0.2, 1.8, 1.50];
+                [-0.2, 1.8, 1.50];
+                [-0.2, 1.8, 1.50];
+                [-0.5, 1.8, 1.50];
+                [-0.5, 1.8, 1.50];
+                [-0.5, 1.8, 1.50];
+                [-0.8, 1.8, 1.50];
+                [-0.8, 1.8, 1.50];
+                [-0.8, 1.8, 1.50];
+
+            };
         end
 
         function placePlates(self)
@@ -61,24 +77,31 @@ classdef InitialisePlates < handle
             % Convert initial and final plate locations to target transforms
             self.initialTargetTransforms = cell(size(self.plateLocations));
             self.safeInitialTargetTransforms = cell(size(self.plateLocations));
+            self.stackTargetTransforms = cell(size(self.plateLocations));
+            self.safeStackTargetTransforms = cell(size(self.plateLocations));
             self.finalTargetTransforms = cell(size(self.plateLocations));
             self.safeFinalTargetTransforms = cell(size(self.plateLocations));
 
             for i = 1:self.numOfPlates
                 translationInitial = self.plateLocations{i}(1:3);
-                translationFinal = self.plateStack{i}(1:3);
+                translationStack = self.plateStack{i}(1:3);
+                translationFinal = self.plateFinal{i}(1:3);
 
                 % Create the homogeneous transformation matrix
                 tInitial = transl(translationInitial);
+                tStack = transl(translationStack);
                 tFinal = transl(translationFinal);
 
                 self.initialTargetTransforms{i} = tInitial;
                 self.safeInitialTargetTransforms{i} = tInitial;
                 self.safeInitialTargetTransforms{i}(3,4) = self.safeInitialTargetTransforms{i}(3,4) + self.safeOffset;
 
+                self.stackTargetTransforms{i} = tStack;
+                self.safeStackTargetTransforms{i} = tStack;
+                self.safeStackTargetTransforms{i}(3,4) = self.safeStackTargetTransforms{i}(3,4) + self.safeOffset;
+
                 self.finalTargetTransforms{i} = tFinal;
                 self.safeFinalTargetTransforms{i} = tFinal;
-                self.finalTargetTransforms{i}(3,4) = self.finalTargetTransforms{i}(3,4) - 0.1;
                 self.safeFinalTargetTransforms{i}(3,4) = self.safeFinalTargetTransforms{i}(3,4) + self.safeOffset;
             end
         end

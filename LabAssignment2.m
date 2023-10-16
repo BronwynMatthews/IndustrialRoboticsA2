@@ -15,6 +15,7 @@ classdef LabAssignment2 < handle
         ur5End;
         ur5GriperOffset = 0.06;
         pandaState;
+        ur5State;
         plates;
         plateModel;
         plateJoints = [0,0];
@@ -81,6 +82,8 @@ classdef LabAssignment2 < handle
             for i = 1:self.objPlates.numOfPlates
                 disp(['Panda unstacking plate ', num2str(i)])
                 self.pandaState = 1;
+                self.ur5State = 1;
+                ur5Started = false;
                 self.plateModel = self.plates{self.plateCounter};
                 for j = 1:6
                     % STATE 1 is panda moving to safe position above initial plate position (WITHOUT plate)
@@ -89,8 +92,20 @@ classdef LabAssignment2 < handle
                     % STATE 4 is panda moving to safe position above final plate position (WITH plate)
                     % STATE 5 is panda placing plate in its final position
                     % STATE 6 is panda moving to safe position above final plate position (WITHOUT plate)
+
+                    % Log the start time and status
+                    logData.Time = {};
+                    logData.Time{end+1} = datestr(datetime('now'), 'yyyy-mm-dd HH:MM:SS'); % Log the time that the robot starts
+                    logData.Status{end+1} = ['Panda picking/placing plate ', num2str(i), ' in State ', num2str(j)];
+                    logData.Transform{end+1} = mat2str(self.objPlates.initialTargetTransforms{i}(1:3, 4).');
+
                     self.moveToPos();
 
+                    if i == 4 && ~ur5Started
+                        self.moveUR5(1)
+                        ur5Started = true;
+                    end
+                    
                     self.pandaState = self.pandaState + 1;
                 end
                 self.plateCounter = self.plateCounter + 1;
@@ -126,21 +141,19 @@ classdef LabAssignment2 < handle
                     rpy = rpy2tr(0, 180, 0, 'deg');
                 case 4
                     disp('CASE 4')
-                    targetPos = self.objPlates.safeFinalTargetTransforms{self.plateCounter};
+                    targetPos = self.objPlates.safeStackTargetTransforms{self.plateCounter};
                     rpy = rpy2tr(0, 180, 0, 'deg');
                 case 5
                     disp('CASE 5')
-                    targetPos = self.objPlates.finalTargetTransforms{self.plateCounter};
+                    targetPos = self.objPlates.stackTargetTransforms{self.plateCounter};
                     steps = 10;
                     rpy = rpy2tr(0, 90, 90, 'deg');
                 case 6
                     disp('CASE 6')
-                    targetPos = self.objPlates.safeFinalTargetTransforms{self.plateCounter};
+                    targetPos = self.objPlates.safeStackTargetTransforms{self.plateCounter};
                     steps = 10;
                     rpy = rpy2tr(0, 90, 90, 'deg');
             end
-
-            targetPos(3,4) = targetPos(3,4) + self.pandaGriperOffset;
 
             robotXYZ = self.pandaEnd.T; 
             robotXYZ = robotXYZ(1:3,4)';
@@ -196,6 +209,22 @@ classdef LabAssignment2 < handle
                 end
             end
         end
+
+        function moveUR5(self, stack)
+            initialTarget = self.objPlates.stackTargetTransforms{stack}
+            finalTarget = self.objPlates.finalTargetTransforms{stack}
+            finalJoints = self.linearUR5.model.ikcon(finalTarget, self.ur5JointAngles)
+
+            qMatrix = jtraj(self.ur5JointAngles, finalJoints, 10)
+            
+            for i = 1:length(qMatrix)
+                q = qMatrix(i,:)
+                self.linearUR5.model.animate(q)
+                drawnow()
+                pause(0.1);
+            end
+        end
+
 
         function updateRobots(self)
             self.pandaJointAngles = self.panda.model.getpos();

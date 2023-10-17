@@ -19,6 +19,7 @@ classdef LabAssignment2 < handle
         plates;
         plateModel;
         plateJoints = [0,0];
+        gui;
     end
     
     methods
@@ -29,9 +30,10 @@ classdef LabAssignment2 < handle
 
             hold on
             self.InitialiseRobots();
-            self.InitialiseEnvironment();
-            self.InitialisePlates();
-            self.RunRobot();            
+            % self.InitialiseEnvironment();
+            % self.InitialisePlates();
+            self.StartGui();
+            % self.RunRobot();            
         end
         
         function InitialiseRobots(self)
@@ -39,6 +41,13 @@ classdef LabAssignment2 < handle
 
             %%  below change to the new linear ur5 (with gripper attachment
             self.linearUR5 = LinearUR5custom(transl(0.5,2.6,1.0));
+        
+            self.UpdateRobots();
+        end
+
+        function StartGui(self)
+            self.gui = GUI(self);
+            self.gui.UpdateGUI();
         end
 
         function InitialiseEnvironment(self)

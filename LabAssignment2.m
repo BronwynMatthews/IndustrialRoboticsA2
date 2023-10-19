@@ -30,7 +30,7 @@ classdef LabAssignment2 < handle
 
             hold on
             self.InitialiseRobots();
-            % self.InitialiseEnvironment();
+            self.InitialiseEnvironment();
             % self.InitialisePlates();
             self.StartGui();
             % self.RunRobot();            
@@ -47,7 +47,24 @@ classdef LabAssignment2 < handle
 
         function StartGui(self)
             self.gui = GUI(self);
-            self.gui.UpdateGUI();
+            qMatrix = self.pandaJointAngles;
+            tic;
+            while(1)
+                self.gui.UpdateGUI();
+                disp(['timestep ', num2str(toc)]);
+                if self.gui.jog
+                    tr = self.gui.StepRobot()
+                    qMatrix = self.panda.model.ikcon(tr)
+                    self.gui.UpdateSliders(qMatrix)
+                    self.panda.model.animate(qMatrix);
+                    self.gui.jog = false;
+                else
+                    qMatrix = self.gui.GetLinkValues();
+                    self.panda.model.animate(qMatrix);
+                end
+                self.UpdateRobots();
+                pause(0.5);
+            end
         end
 
         function InitialiseEnvironment(self)

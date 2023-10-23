@@ -8,6 +8,7 @@ classdef LabAssignment2 < handle
         linearUR5;
         objPlates;
         plateCounter = 1;
+        plateStackerCounter = 1;
         pandaJointAngles;
         pandaEnd;
         pandaGriperOffset = 0.05; % RADIUS OF A PLATE
@@ -18,6 +19,7 @@ classdef LabAssignment2 < handle
         ur5State;
         plates;
         plateModel;
+        plateStackerModel;
         plateJoints = [0,0];
         gui
     end
@@ -280,6 +282,12 @@ classdef LabAssignment2 < handle
                     q = qMatrix(j,:);
                     self.linearUR5.model.animate(q);
                     drawnow();
+                    % Edits start here
+
+                    self.UpdateRobots();
+                    self.MovePlateStacker(); % To move the plate Stacker with the UR5
+        
+                    % Edits end here
                     pause(0.1);
                 end
                 self.UpdateRobots();
@@ -333,7 +341,7 @@ classdef LabAssignment2 < handle
             % Apply the offset to the current position
             plateStackerPos(1:3, 4) = plateStackerPos(1:3, 4) + globalOffset;
         
-            if self.LinearUR5 == 1
+            if self.linearUR5 == 1
                 self.plateStackerModel.model.base = plateStackerPos * troty(-pi/2);
             else
                 self.plateStackerModel.model.base = plateStackerPos * trotx(-pi/2);

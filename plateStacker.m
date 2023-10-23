@@ -1,6 +1,6 @@
 classdef plateStacker < RobotBaseClass
     properties(Access = public)              
-        plyFileNameStem = 'plateStackerRobot'
+        plyFileNameStem = 'plateStackerRed'
     end
     
     methods
@@ -10,12 +10,21 @@ classdef plateStacker < RobotBaseClass
             self.CreateModel();
 
             if nargin < 1			
-				baseTr = eye(4);	
+				baseTr = eye(4);
+            	colour = 'plateStackerRed';
             end
 
             % May have to edit below rotational transform based on ply
             % orinetation
             self.model.base = self.model.base.T * baseTr * trotz(pi/2) * troty(pi/2);
+
+            if strcmp(colour, 'red')
+                self.plyFileNameStem = 'plateStackerRed';
+            elseif strcmp(colour,'blue')
+                self.plyFileNameStem = 'plateStackerBlue';
+            elseif strcmp(colour,'green')
+                self.plyFileNameStem = 'plateStackerGreen';
+            end
 
             self.PlotAndColourRobot();    
             

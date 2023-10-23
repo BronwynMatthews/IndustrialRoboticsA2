@@ -19,7 +19,7 @@ classdef LabAssignment2 < handle
         plates;
         plateModel;
         plateJoints = [0,0];
-        gui;
+        gui
     end
     
     methods
@@ -31,9 +31,9 @@ classdef LabAssignment2 < handle
             hold on
             self.InitialiseRobots();
             self.InitialiseEnvironment();
-            % self.InitialisePlates();
-            self.StartGui();
-            % self.RunRobot();            
+            self.InitialisePlates();
+            % self.StartGui();
+            self.RunRobot();            
         end
         
         function InitialiseRobots(self)
@@ -318,6 +318,30 @@ classdef LabAssignment2 < handle
             end
             animate(self.plateModel.model, self.plateJoints);
         end
+    
+
+
+        function MovePlateStacker(self)
+            plateStackerPos = self.ur5End.T;
+        
+            % Extract the current z-direction of the end effector
+            zDirection = plateStackerPos(1:3, 3);
+            
+            % Compute the offset in the global frame
+            globalOffset = zDirection * (self.LinearUR5Offset);
+            
+            % Apply the offset to the current position
+            plateStackerPos(1:3, 4) = plateStackerPos(1:3, 4) + globalOffset;
+        
+            if self.LinearUR5 == 1
+                self.plateStackerModel.model.base = plateStackerPos * troty(-pi/2);
+            else
+                self.plateStackerModel.model.base = plateStackerPos * trotx(-pi/2);
+            end
+            animate(self.plateStackerModel.model, self.plateStackerJoints);
+        end
     end
 end
+
+
 

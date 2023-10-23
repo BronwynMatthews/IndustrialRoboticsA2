@@ -41,7 +41,7 @@ classdef LabAssignment2 < handle
         function InitialiseRobots(self)
             self.panda = Panda(transl(1.6, 3.0, 1.0));
 
-            %%  below change to the new linear ur5 (with gripper attachment
+            %%  below change to the new linear ur5 (with gripper attachment)
             self.linearUR5 = LinearUR5custom(transl(0.5,2.6,1.0));
         
             self.UpdateRobots();
@@ -93,6 +93,31 @@ classdef LabAssignment2 < handle
                 end
             end
         end
+
+
+
+
+         function InitialisePlateStacker(self)
+            self.objPlateStackers = InitialisePlateStacker(); % plot the plates in the workspace
+
+            plateStackerNum = 1;
+            for i = 1:3
+                for j = 1:3
+                    baseTr = self.objPlateStackers.initialTargetTransforms{plateStackerNum};
+                    switch i
+                        case 1
+                            colour = 'red';
+                        case 2
+                            colour = 'blue';
+                        case 3
+                            colour = 'green';
+                    end
+                    self.plates{plateStackerNum} = Plate(baseTr, colour);
+                    plateStackerNum = plateStackerNum + 1;
+                end
+            end
+         end
+
 
         function RunRobot(self)                      
             input('Press enter to begin')
@@ -262,6 +287,11 @@ classdef LabAssignment2 < handle
         % end
 
         function MoveUR5(self, stack)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % insert the platestacker robot placement once the plate stack
+            % has been made 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             targetTransforms = cell(7);
             targetTransforms{1} = self.objPlates.stackTargetTransforms{stack} * rpy2tr(0, 90, 0, 'deg');
             targetTransforms{1}(1,4) = targetTransforms{1}(1,4) - 0.2;
@@ -282,12 +312,13 @@ classdef LabAssignment2 < handle
                     q = qMatrix(j,:);
                     self.linearUR5.model.animate(q);
                     drawnow();
-                    % Edits start here
-
-                    self.UpdateRobots();
-                    self.MovePlateStacker(); % To move the plate Stacker with the UR5
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                    
+                    % self.UpdateRobots();
+                    % self.MovePlateStacker(); % To move the plate Stacker with the UR5
         
-                    % Edits end here
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
                     pause(0.1);
                 end
                 self.UpdateRobots();
@@ -328,7 +359,7 @@ classdef LabAssignment2 < handle
         end
     
 
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         function MovePlateStacker(self)
             plateStackerPos = self.ur5End.T;
         
@@ -348,6 +379,7 @@ classdef LabAssignment2 < handle
             end
             animate(self.plateStackerModel.model, self.plateStackerJoints);
         end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     end
 end
 

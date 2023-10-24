@@ -15,12 +15,19 @@ classdef Plate < RobotBaseClass
             end
             self.model.base = self.model.base.T * baseTr * trotz(pi/2) * troty(pi/2);
 
+            % if strcmp(colour, 'red')
+            %     self.plyFileNameStem = 'plateRed';
+            % elseif strcmp(colour,'blue')
+            %     self.plyFileNameStem = 'plateBlue';
+            % elseif strcmp(colour,'green')
+            %     self.plyFileNameStem = 'plateGreen';
+            % end
             if strcmp(colour, 'red')
-                self.plyFileNameStem = 'plateRed';
+                self.plyFileNameStem = 'newsize_plateRed';
             elseif strcmp(colour,'blue')
-                self.plyFileNameStem = 'plateBlue';
+                self.plyFileNameStem = 'newsize_plateBlue';
             elseif strcmp(colour,'green')
-                self.plyFileNameStem = 'plateGreen';
+                self.plyFileNameStem = 'newsize_plateGreen';
             end
            
             self.PlotAndColourRobot();    

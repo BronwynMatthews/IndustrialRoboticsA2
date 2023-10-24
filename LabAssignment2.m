@@ -39,11 +39,11 @@ classdef LabAssignment2 < handle
         end
         
         function InitialiseRobots(self)
-            self.panda = Panda(transl(1.6, 3.0, 1.0));
+            self.panda = Panda(transl(1.6, 3.0, 0.95));
 
             %%  below change to the new linear ur5 (with gripper attachment)
-            self.linearUR5 = LinearUR5custom(transl(0.5,2.6,1.0));
-        
+            self.linearUR5 = LinearUR5custom(transl(0.5, 2.6, 0.95));
+         
             self.UpdateRobots();
         end
 
@@ -75,11 +75,12 @@ classdef LabAssignment2 < handle
 
         function InitialisePlates(self)
             self.objPlates = InitialisePlates(); % plot the plates in the workspace
+            % self.objPlates.placeStacker
 
             plateNum = 1;
             for i = 1:3
                 for j = 1:3
-                    baseTr = self.objPlates.initialTargetTransforms{plateNum};
+                    baseTr = transl(self.objPlates.plateLocations{plateNum}(1:3));
                     switch i
                         case 1
                             colour = 'red';
@@ -120,7 +121,7 @@ classdef LabAssignment2 < handle
 
 
         function RunRobot(self)                      
-            input('Press enter to begin')
+            % input('Press enter to begin')
             self.UpdateRobots();
         
             % Initialise log variable
@@ -156,16 +157,18 @@ classdef LabAssignment2 < handle
 
                     self.MoveToPos();
 
-                    if (i == 3 && self.pandaState == 6) || (i == 6 && self.pandaState == 6) || (i == 9 && self.pandaState == 6)
-                        self.MoveUR5(stack)
-                        stack = stack + 3;
-                    end
+                    % if (i == 4 && self.pandaState == 1) || (i == 7 && self.pandaState == 1)
+                    %     self.MoveUR5(stack)
+                    %     stack = stack + 3;
+                    % end
 
                     self.pandaState = self.pandaState + 1;
                 end
                 self.plateCounter = self.plateCounter + 1;
             end
         
+            self.MoveUR5(stack);
+
             % Display a message indicating the end of the task
             disp('Task Completed Successfully');
             % Log the end time and status
@@ -320,14 +323,9 @@ classdef LabAssignment2 < handle
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
                     pause(0.1);
+                
                 end
                 self.UpdateRobots();
-            end
-        end
-
-        function SplitAnimation(self, qMatrixPanda, qMatrixUR5)
-            for i = 1:length(qMatrixPanda)
-                q = qMatrixPanda();
             end
         end
 

@@ -11,7 +11,7 @@ classdef LabAssignment2 < handle
         plateStackerCounter = 1;
         pandaJointAngles;
         pandaEnd;
-        pandaGriperOffset = 0.05; % RADIUS OF A PLATE
+        pandaGriperOffset = 0.12; % RADIUS OF A PLATE
         ur5JointAngles;
         ur5End;
         ur5GriperOffset = 0.06;
@@ -21,7 +21,9 @@ classdef LabAssignment2 < handle
         plateModel;
         plateStackerModel;
         plateJoints = [0,0];
-        gui
+        plateStackerJoints = [0,0];
+        gui;
+        stack;
     end
     
     methods
@@ -123,7 +125,7 @@ classdef LabAssignment2 < handle
         function RunRobot(self)                      
             % input('Press enter to begin')
             self.UpdateRobots();
-        
+            stack = 1;
             % Initialise log variable
             logData = struct('Time', [], 'Status', [], 'Transform', []); % Create the logData Structure
             
@@ -133,13 +135,15 @@ classdef LabAssignment2 < handle
             logData.Status{end+1} = 'Task Started';
             logData.Transform{end+1} = 'N/A';
 
-            stack = 1;
+            stackCounter = 1;
 
             for i = 1:self.objPlates.numOfPlates
                 disp(['Panda unstacking plate ', num2str(i)])
                 self.pandaState = 1;
                 self.ur5State = 1;
                 self.plateModel = self.plates{self.plateCounter};
+                
+                
                 % self.movePanda();
                 for j = 1:6
                     % STATE 1 is panda moving to safe position above initial plate position (WITHOUT plate)
@@ -157,16 +161,45 @@ classdef LabAssignment2 < handle
 
                     self.MoveToPos();
 
-                    % if (i == 4 && self.pandaState == 1) || (i == 7 && self.pandaState == 1)
-                    %     self.MoveUR5(stack)
-                    %     stack = stack + 3;
-                    % end
+                    if (i == 4 && self.pandaState == 1) || (i == 7 && self.pandaState == 1)
+                        if i == 4
+                            colour = 'red';
+                        elseif i == 7
+                            colour = 'blue';
+                        end
+
+                        try 
+                            delete(self.objPlates.stackers{stack})
+                            delete(self.plates{i-3});
+                            delete(self.plates{i-2});
+                            delete(self.plates{i-1});
+                        end
+                        pos = self.objPlates.plateStack{i - 3}(1:3)
+                        % pos(1) = pos(1) + 0.07;
+                        pos(3) = pos(3) - 0.09;
+                        self.stack{stack} = plateStacker(transl(pos), colour);
+                        self.MoveUR5(stack)
+                        % stackCounter = stackCounter + 3;
+                        stack = stack + 1;
+                    end
 
                     self.pandaState = self.pandaState + 1;
                 end
                 self.plateCounter = self.plateCounter + 1;
             end
-        
+            
+            colour = 'green';
+            try 
+                delete(self.objPlates.stackers{3})
+                delete(self.plates{7});
+                delete(self.plates{8});
+                delete(self.plates{9});
+            end
+            pos = self.objPlates.plateStack{7}(1:3)
+            % pos(1) = pos(1) + 0.07;
+            pos(3) = pos(3) - 0.09;
+            self.stack{3} = plateStacker(transl(pos), colour);
+
             self.MoveUR5(stack);
 
             % Display a message indicating the end of the task
@@ -252,52 +285,28 @@ classdef LabAssignment2 < handle
             end
         end
 
-        % function path = generate_arc_path(self, start_xyz, target_xyz, base_xyz, steps)
-        %     % Input check
-        %     start_xyz
-        %     target_xyz
-        %     base_xyz
-        % 
-        %     % Initialize path
-        %     path = zeros(steps, length(start_xyz));
-        % 
-        %     % Check the state of 'panda'
-        %     if self.pandaState == 2 || self.pandaState == 3 || self.pandaState == 5 || self.pandaState == 6
-        %         for i = 1:length(target_xyz)
-        %             path(:, i) = linspace(start_xyz(i), target_xyz(i), steps);
-        %         end
-        %     else
-        %         % Calculate the midpoint of the line connecting start and target
-        %         midpoint = (start_xyz + target_xyz) / 2;
-        % 
-        %         % Determine the direction from base to the midpoint in the XY plane
-        %         direction_xy = [midpoint(1) - base_xyz(1), midpoint(2) - base_xyz(2)];
-        %         direction_xy = direction_xy / norm(direction_xy);
-        % 
-        %         % Find the crest point 0.5m away from the base in the XY plane direction and midpoint Z height
-        %         crest_xyz = [base_xyz(1:2) + 0.5 * direction_xy, midpoint(3)]
-        % 
-        %         % Linearly interpolate from start to crest and from crest to target
-        %         first_half = zeros(ceil(steps/2), 3);
-        %         second_half = zeros(floor(steps/2), 3);
-        %         for i = 1:length(start_xyz)
-        %             first_half(:, i) = linspace(start_xyz(i), crest_xyz(i), ceil(steps/2));
-        %             second_half(:, i) = linspace(crest_xyz(i), target_xyz(i), floor(steps/2));
-        %         end
-        % 
-        %         path = [first_half; second_half(2:end, :)];  % Concatenate to avoid repeating the crest value
-        %     end
-        % end
-
         function MoveUR5(self, stack)
-
+            self.plateStackerModel = self.stack{stack};
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             % insert the platestacker robot placement once the plate stack
             % has been made 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % targetTransforms = cell(7);
+            % targetTransforms{1} = self.objPlates.stackTargetTransforms{stack} * rpy2tr(0, 90, 0, 'deg');
+            % targetTransforms{1}(1,4) = targetTransforms{1}(1,4) - 0.2;
+            % targetTransforms{2} = targetTransforms{1};
+            % targetTransforms{4} = targetTransforms{1};
+            % targetTransforms{1}(1,4) = targetTransforms{1}(1,4) - 0.1;
+            % targetTransforms{3} = targetTransforms{1};
+            % targetTransforms{4}(3,4) = targetTransforms{4}(3,4) + 0.45;
+            % targetTransforms{5} = self.objPlates.finalTargetTransforms{stack} * rpy2tr(0, 90, -90, 'deg');
+            % targetTransforms{6} = targetTransforms{5};
+            % targetTransforms{5}(2,4) = targetTransforms{5}(2,4) + 0.1;
+            % targetTransforms{7} = targetTransforms{5};
+
             targetTransforms = cell(7);
-            targetTransforms{1} = self.objPlates.stackTargetTransforms{stack} * rpy2tr(0, 90, 0, 'deg');
-            targetTransforms{1}(1,4) = targetTransforms{1}(1,4) - 0.2;
+            targetTransforms{1} = self.plateStackerModel.model.base.T * rpy2tr(0, 90, 0, 'deg');
+            targetTransforms{1}(1,4) = targetTransforms{1}(1,4) - self.ur5GriperOffset;
             targetTransforms{2} = targetTransforms{1};
             targetTransforms{4} = targetTransforms{1};
             targetTransforms{1}(1,4) = targetTransforms{1}(1,4) - 0.1;
@@ -314,6 +323,10 @@ classdef LabAssignment2 < handle
                 for j = 1:length(qMatrix)
                     q = qMatrix(j,:);
                     self.linearUR5.model.animate(q);
+                    if i ~= 1 && i ~= 2
+                        self.MovePlateStacker()
+                        drawnow();
+                    end
                     drawnow();
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     
@@ -365,16 +378,17 @@ classdef LabAssignment2 < handle
             zDirection = plateStackerPos(1:3, 3);
             
             % Compute the offset in the global frame
-            globalOffset = zDirection * (self.LinearUR5Offset);
+            globalOffset = zDirection * (self.ur5GriperOffset);
             
             % Apply the offset to the current position
             plateStackerPos(1:3, 4) = plateStackerPos(1:3, 4) + globalOffset;
         
-            if self.linearUR5 == 1
-                self.plateStackerModel.model.base = plateStackerPos * troty(-pi/2);
-            else
-                self.plateStackerModel.model.base = plateStackerPos * trotx(-pi/2);
-            end
+            % if self.linearUR5 == 1
+            %     self.plateStackerModel.model.base = plateStackerPos * troty(-pi/2);
+            % else
+            %     self.plateStackerModel.model.base = plateStackerPos * trotx(-pi/2);
+            % end
+            self.plateStackerModel.model.base = plateStackerPos * troty(-pi/2);
             animate(self.plateStackerModel.model, self.plateStackerJoints);
         end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

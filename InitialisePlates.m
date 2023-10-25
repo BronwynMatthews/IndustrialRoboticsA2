@@ -49,15 +49,15 @@ classdef InitialisePlates < handle
             };
 
             self.plateStack = {
-                [0.95, 3.00, 1.0];
-                [0.95, 3.00, 1.02];
                 [0.95, 3.00, 1.04];
-                [0.85, 2.7, 1.0];
-                [0.85, 2.7, 1.02];
+                [0.95, 3.00, 1.06];
+                [0.95, 3.00, 1.08];
                 [0.85, 2.7, 1.04];
-                [1.1, 2.59, 1.0];
-                [1.1, 2.59, 1.02];
-                [1.1, 2.59, 1.04];
+                [0.85, 2.7, 1.06];
+                [0.85, 2.7, 1.08];
+                [1.13, 2.59, 1.04];
+                [1.13, 2.59, 1.06];
+                [1.13, 2.59, 1.08];
             }; % WOKRING 8/9
 
             plot3(self.plateStack{1}(1), self.plateStack{1}(2), 1.1, 'x')
@@ -65,16 +65,14 @@ classdef InitialisePlates < handle
             plot3(self.plateStack{7}(1), self.plateStack{7}(2), 1.1, 'x')
 
             self.plateFinal = {
-                [0.5, 2.2, 1.45];
-                [0.5, 2.2, 1.45];
-                [0.5, 2.2, 1.45];
-                [0.0, 2.2, 1.45];
-                [0.0, 2.2, 1.45];
-                [0.0, 2.2, 1.45];
-                [-0.5, 2.2, 1.45];
-                [-0.5, 2.2, 1.45];
-                [-0.5, 2.2, 1.45];
+                [0.5, 2.0, 1.45];
+                [0.0, 2.0, 1.45];
+                [-0.5, 2.0, 1.45];
             };
+
+            plot3(self.plateFinal{1}(1), self.plateFinal{1}(2), 1.5, 'o')
+            plot3(self.plateFinal{2}(1), self.plateFinal{2}(2), 1.5, 'o')
+            plot3(self.plateFinal{3}(1), self.plateFinal{3}(2), 1.5, 'o')
         end
 
         function placePlates(self)
@@ -99,10 +97,11 @@ classdef InitialisePlates < handle
                 self.safeStackTargetTransforms{i} = self.stackTargetTransforms{i};
                 self.safeStackTargetTransforms{i}(3,4) = self.safeStackTargetTransforms{i}(3,4) + self.safeOffset;
 
+                
+            end
+            for i = 1:3
                 self.finalTargetTransforms{i} = transl(self.plateFinal{i}(1:3));
                 self.finalTargetTransforms{i}(2,4) = self.finalTargetTransforms{i}(2,4) + self.pandaGripperOffset;
-                self.safeFinalTargetTransforms{i} = self.finalTargetTransforms{i};
-                self.safeFinalTargetTransforms{i}(2,4) = self.safeFinalTargetTransforms{i}(2,4) + self.safeOffset;
             end
         end
 
@@ -110,9 +109,9 @@ classdef InitialisePlates < handle
             stack = 1;
             for i = 1:3
                 pos = self.plateStack{stack}(1:3);
-                pos(1) = pos(1) - 0.07;
-                pos(2) = pos(2) + 0.14;
-                pos(3) = pos(3) - 0.08;
+                % pos(1) = pos(1) - 0.07;
+                % pos(2) = pos(2) + 0.14;
+                pos(3) = pos(3) - 0.09;
                 self.stackers{i} = PlaceObject('plateStacker.ply', pos);
                 stack = stack + 3;
             end

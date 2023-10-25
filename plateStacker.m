@@ -16,7 +16,7 @@ classdef plateStacker < RobotBaseClass
 
             % May have to edit below rotational transform based on ply
             % orinetation
-            self.model.base = self.model.base.T * baseTr * trotz(pi/2) * troty(pi/2);
+            self.model.base = self.model.base.T * baseTr * trotz(pi/2);
 
             if strcmp(colour, 'red')
                 self.plyFileNameStem = 'plateStackerRed';

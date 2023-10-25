@@ -14,7 +14,7 @@ classdef LabAssignment2 < handle
         pandaGriperOffset = 0.12; % RADIUS OF A PLATE
         ur5JointAngles;
         ur5End;
-        ur5GriperOffset = 0.06;
+        ur5GriperOffset = 0.25;
         pandaState;
         ur5State;
         plates;
@@ -98,33 +98,33 @@ classdef LabAssignment2 < handle
         end
 
 
-        function InitialisePlateStacker(self)
-            self.objPlateStackers = InitialisePlateStacker(); % plot the plates in the workspace
-
-            plateStackerNum = 1;
-
-            for i = 1:3
-                for j = 1:3
-                    baseTr = self.objPlateStackers.initialTargetTransforms{plateStackerNum};
-                    switch i
-                        case 1
-                            colour = 'red';
-                        case 2
-                            colour = 'blue';
-                        case 3
-                            colour = 'green';
-                    end
-                    self.plates{plateStackerNum} = Plate(baseTr, colour);
-                    plateStackerNum = plateStackerNum + 1;
-                end
-            end
-        end
+        % function InitialisePlateStacker(self)
+        %     self.objPlateStackers = InitialisePlateStacker(); % plot the plates in the workspace
+        % 
+        %     plateStackerNum = 1;
+        % 
+        %     for i = 1:3
+        %         for j = 1:3
+        %             baseTr = self.objPlateStackers.initialTargetTransforms{plateStackerNum};
+        %             switch i
+        %                 case 1
+        %                     colour = 'red';
+        %                 case 2
+        %                     colour = 'blue';
+        %                 case 3
+        %                     colour = 'green';
+        %             end
+        %             self.plates{plateStackerNum} = Plate(baseTr, colour);
+        %             plateStackerNum = plateStackerNum + 1;
+        %         end
+        %     end
+        % end
 
 
         function RunRobot(self)                      
             % input('Press enter to begin')
             self.UpdateRobots();
-            stack = 1;
+            stackCounter = 1;
             % Initialise log variable
             logData = struct('Time', [], 'Status', [], 'Transform', []); % Create the logData Structure
             
@@ -133,8 +133,6 @@ classdef LabAssignment2 < handle
             logData.Time{end+1} = datestr(datetime('now'), 'yyyy-mm-dd HH:MM:SS'); % Log the time that the robot starts
             logData.Status{end+1} = 'Task Started';
             logData.Transform{end+1} = 'N/A';
-
-            stackCounter = 1;
 
             for i = 1:self.objPlates.numOfPlates
                 disp(['Panda unstacking plate ', num2str(i)])
@@ -168,18 +166,16 @@ classdef LabAssignment2 < handle
                         end
 
                         try 
-                            delete(self.objPlates.stackers{stack})
+                            delete(self.objPlates.stackers{stackCounter})
                             delete(self.plates{i-3});
                             delete(self.plates{i-2});
                             delete(self.plates{i-1});
                         end
-                        pos = self.objPlates.plateStack{i - 3}(1:3)
-                        % pos(1) = pos(1) + 0.07;
-                        pos(3) = pos(3) - 0.09;
-                        self.stack{stack} = plateStacker(transl(pos), colour);
-                        self.MoveUR5(stack)
-                        % stackCounter = stackCounter + 3;
-                        stack = stack + 1;
+                        pos = self.objPlates.plateStack{i - 3}(1:3);
+                        pos(3) = pos(3) - 0.04;
+                        self.stack{stackCounter} = plateStacker(transl(pos), colour);
+                        self.MoveUR5(stackCounter)
+                        stackCounter = stackCounter + 1;
                     end
 
                     self.pandaState = self.pandaState + 1;
@@ -195,11 +191,10 @@ classdef LabAssignment2 < handle
                 delete(self.plates{9});
             end
             pos = self.objPlates.plateStack{7}(1:3)
-            % pos(1) = pos(1) + 0.07;
-            pos(3) = pos(3) - 0.09;
+            pos(3) = pos(3) - 0.04;
             self.stack{3} = plateStacker(transl(pos), colour);
 
-            self.MoveUR5(stack);
+            self.MoveUR5(stackCounter);
 
             % Display a message indicating the end of the task
             disp('Task Completed Successfully');
@@ -286,25 +281,9 @@ classdef LabAssignment2 < handle
 
         function MoveUR5(self, stack)
             self.plateStackerModel = self.stack{stack};
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            % insert the platestacker robot placement once the plate stack
-            % has been made 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            % targetTransforms = cell(7);
-            % targetTransforms{1} = self.objPlates.stackTargetTransforms{stack} * rpy2tr(0, 90, 0, 'deg');
-            % targetTransforms{1}(1,4) = targetTransforms{1}(1,4) - 0.2;
-            % targetTransforms{2} = targetTransforms{1};
-            % targetTransforms{4} = targetTransforms{1};
-            % targetTransforms{1}(1,4) = targetTransforms{1}(1,4) - 0.1;
-            % targetTransforms{3} = targetTransforms{1};
-            % targetTransforms{4}(3,4) = targetTransforms{4}(3,4) + 0.45;
-            % targetTransforms{5} = self.objPlates.finalTargetTransforms{stack} * rpy2tr(0, 90, -90, 'deg');
-            % targetTransforms{6} = targetTransforms{5};
-            % targetTransforms{5}(2,4) = targetTransforms{5}(2,4) + 0.1;
-            % targetTransforms{7} = targetTransforms{5};
 
             targetTransforms = cell(7);
-            targetTransforms{1} = self.plateStackerModel.model.base.T * rpy2tr(0, 90, 0, 'deg');
+            targetTransforms{1} = self.plateStackerModel.model.base.T * rpy2tr(0, 90, -90, 'deg');
             targetTransforms{1}(1,4) = targetTransforms{1}(1,4) - self.ur5GriperOffset;
             targetTransforms{2} = targetTransforms{1};
             targetTransforms{4} = targetTransforms{1};
@@ -316,24 +295,31 @@ classdef LabAssignment2 < handle
             targetTransforms{5}(2,4) = targetTransforms{5}(2,4) + 0.1;
             targetTransforms{7} = targetTransforms{5};
 
+            % targetTransforms = cell(7);
+            % targetTransforms{2} = self.plateStackerModel.model.base.T * rpy2tr(0, 90, 0, 'deg');
+            % % targetTransforms{2}(1,4) = targetTransforms{2}(1,4) - self.ur5GriperOffset;
+            % targetTransforms{1} = targetTransforms{2};
+            % targetTransforms{1}(1,4) = targetTransforms{1}(1,4) - 0.2;
+            % targetTransforms{3} = targetTransforms{1};
+            % targetTransforms{4} = targetTransforms{1};
+            % targetTransforms{4}(3,4) = targetTransforms{4}(3,4) + 0.3;
+            % targetTransforms{6} = self.objPlates.finalTargetTransforms{stack} * rpy2tr(0, 90, -90, 'deg');
+            % % targetTransforms{6}(2,4) = targetTransforms{6}(2,4) + self.ur5GriperOffset;
+            % targetTransforms{5} = targetTransforms{6};
+            % targetTransforms{5}(2,4) = targetTransforms{5}(2,4) + 0.2;
+            % targetTransforms{7} = targetTransforms{5};
+
             for i = 1:length(targetTransforms)
                 angles = self.linearUR5.model.ikcon(targetTransforms{i}, self.ur5JointAngles);
                 qMatrix = jtraj(self.ur5JointAngles, angles, 10);
                 for j = 1:length(qMatrix)
                     q = qMatrix(j,:);
                     self.linearUR5.model.animate(q);
-                    if i ~= 1 && i ~= 2
+                    if i >= 3 && i < 7
                         self.MovePlateStacker()
                         drawnow();
                     end
                     drawnow();
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                    
-                    % self.UpdateRobots();
-                    % self.MovePlateStacker(); % To move the plate Stacker with the UR5
-        
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
                     pause(0.1);
                 
                 end
@@ -349,6 +335,7 @@ classdef LabAssignment2 < handle
         end
 
         function MovePlates(self)
+            self.UpdateRobots();
             platePos = self.pandaEnd.T;
         
             % Extract the current z-direction of the end effector
@@ -386,13 +373,15 @@ classdef LabAssignment2 < handle
 % MovePlateStacker function below 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         function MovePlateStacker(self)
+            self.UpdateRobots();
             plateStackerPos = self.ur5End.T;
         
             % Extract the current z-direction of the end effector
             zDirection = plateStackerPos(1:3, 3);
             
             % Compute the offset in the global frame
-            globalOffset = zDirection * (self.ur5GriperOffset);
+            % globalOffset = zDirection * (self.ur5GriperOffset)
+            globalOffset = zDirection * self.ur5GriperOffset
             
             % Apply the offset to the current position
             plateStackerPos(1:3, 4) = plateStackerPos(1:3, 4) + globalOffset;

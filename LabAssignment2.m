@@ -44,7 +44,7 @@ classdef LabAssignment2 < handle
             self.panda = Panda(transl(1.6, 3.0, 0.95));
 
             %%  below change to the new linear ur5 (with gripper attachment)
-            self.linearUR5 = LinearUR5custom(transl(0.5, 2.6, 0.95));
+            self.linearUR5 = LinearUR5custom(transl(0.4, 2.6, 0.95));
          
             self.UpdateRobots();
         end
@@ -190,7 +190,7 @@ classdef LabAssignment2 < handle
                 delete(self.plates{8});
                 delete(self.plates{9});
             end
-            pos = self.objPlates.plateStack{7}(1:3)
+            pos = self.objPlates.plateStack{7}(1:3);
             pos(3) = pos(3) - 0.04;
             self.stack{3} = plateStacker(transl(pos), colour);
 
@@ -283,31 +283,25 @@ classdef LabAssignment2 < handle
             self.plateStackerModel = self.stack{stack};
 
             targetTransforms = cell(7);
-            targetTransforms{1} = self.plateStackerModel.model.base.T * rpy2tr(0, 90, -90, 'deg');
-            targetTransforms{1}(1,4) = targetTransforms{1}(1,4) - self.ur5GriperOffset;
-            targetTransforms{2} = targetTransforms{1};
-            targetTransforms{4} = targetTransforms{1};
-            targetTransforms{1}(1,4) = targetTransforms{1}(1,4) - 0.1;
-            targetTransforms{3} = targetTransforms{1};
-            targetTransforms{4}(3,4) = targetTransforms{4}(3,4) + 0.45;
+            targetTransforms{2} = self.plateStackerModel.model.base.T * rpy2tr(0, 90, -90, 'deg');
+            targetTransforms{2}(1,4) = targetTransforms{2}(1,4) - self.ur5GriperOffset;
+            targetTransforms{1} = targetTransforms{2};
+            targetTransforms{1}(1,4) = targetTransforms{1}(1,4) - 0.15;
+            targetTransforms{3} = targetTransforms{2};
+            targetTransforms{3}(3,4) = targetTransforms{3}(3,4) + 0.45;
             targetTransforms{5} = self.objPlates.finalTargetTransforms{stack} * rpy2tr(0, 90, -90, 'deg');
-            targetTransforms{6} = targetTransforms{5};
-            targetTransforms{5}(2,4) = targetTransforms{5}(2,4) + 0.1;
-            targetTransforms{7} = targetTransforms{5};
+            targetTransforms{5}(2,4) = targetTransforms{5}(2,4) + self.ur5GriperOffset;
+            targetTransforms{4} = targetTransforms{5};
+            targetTransforms{4}(2,4) = targetTransforms{4}(2,4) + 0.15;
+            targetTransforms{6} = targetTransforms{4};
+            targetTransforms{7} = transl(0.6, 2.4, 1.4) * rpy2tr(180, -90, -90, 'deg');
 
-            % targetTransforms = cell(7);
-            % targetTransforms{2} = self.plateStackerModel.model.base.T * rpy2tr(0, 90, 0, 'deg');
-            % % targetTransforms{2}(1,4) = targetTransforms{2}(1,4) - self.ur5GriperOffset;
-            % targetTransforms{1} = targetTransforms{2};
-            % targetTransforms{1}(1,4) = targetTransforms{1}(1,4) - 0.2;
-            % targetTransforms{3} = targetTransforms{1};
-            % targetTransforms{4} = targetTransforms{1};
-            % targetTransforms{4}(3,4) = targetTransforms{4}(3,4) + 0.3;
-            % targetTransforms{6} = self.objPlates.finalTargetTransforms{stack} * rpy2tr(0, 90, -90, 'deg');
-            % % targetTransforms{6}(2,4) = targetTransforms{6}(2,4) + self.ur5GriperOffset;
-            % targetTransforms{5} = targetTransforms{6};
-            % targetTransforms{5}(2,4) = targetTransforms{5}(2,4) + 0.2;
-            % targetTransforms{7} = targetTransforms{5};
+            for i = 1:length(targetTransforms)
+                pos = targetTransforms{i}(1:3,4);
+                pos = pos';
+                disp(['pos: ', num2str(i), ' xyz = ', num2str(pos)])
+            end
+
 
             for i = 1:length(targetTransforms)
                 angles = self.linearUR5.model.ikcon(targetTransforms{i}, self.ur5JointAngles);
@@ -315,7 +309,7 @@ classdef LabAssignment2 < handle
                 for j = 1:length(qMatrix)
                     q = qMatrix(j,:);
                     self.linearUR5.model.animate(q);
-                    if i >= 3 && i < 7
+                    if i >= 3 && i < 6
                         self.MovePlateStacker()
                         drawnow();
                     end
@@ -381,7 +375,7 @@ classdef LabAssignment2 < handle
             
             % Compute the offset in the global frame
             % globalOffset = zDirection * (self.ur5GriperOffset)
-            globalOffset = zDirection * self.ur5GriperOffset
+            globalOffset = zDirection * self.ur5GriperOffset;
             
             % Apply the offset to the current position
             plateStackerPos(1:3, 4) = plateStackerPos(1:3, 4) + globalOffset;

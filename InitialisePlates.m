@@ -16,7 +16,7 @@ classdef InitialisePlates < handle
         finalTargetTransforms;
         safeFinalTargetTransforms;
         safeOffset = 0.3;
-        pandaGripperOffset = 0.12;
+        plateOffset = 0.12;
         stackers;
     end
     
@@ -35,7 +35,28 @@ classdef InitialisePlates < handle
 
         end
 
+        
+
         function platePositions(self)
+
+            platesXYZ = {
+                [0.8, 2.9, 1.04];
+                [0.95, 2.55, 1.04];
+                [1.25, 2.4, 1.04];
+                
+            };
+    
+            self.plateStack = cell(9,1);
+            count = 1;
+            for i = 1:3
+                for j = 0:2
+                    self.plateStack{count} = platesXYZ{i};
+                    self.plateStack{count}(3) = self.plateStack{count}(3) + (0.02 * j);
+                    count = count + 1;
+                end
+            end
+
+
             self.plateLocations = {
                 [1.95, 2.48, 1.00];
                 [1.95, 2.52, 1.00]; 
@@ -48,26 +69,26 @@ classdef InitialisePlates < handle
                 [1.95, 2.80, 1.00];
             };
 
-            self.plateStack = {
-                [0.95, 3.00, 1.04];
-                [0.95, 3.00, 1.06];
-                [0.95, 3.00, 1.08];
-                [0.85, 2.7, 1.04];
-                [0.85, 2.7, 1.06];
-                [0.85, 2.7, 1.08];
-                [1.13, 2.59, 1.04];
-                [1.13, 2.59, 1.06];
-                [1.13, 2.59, 1.08];
-            }; % WOKRING 8/9
+            % self.plateStack = {
+            %     [0.95, 3.00, 1.04];
+            %     [0.95, 3.00, 1.06];
+            %     [0.95, 3.00, 1.08];
+            %     [0.85, 2.7, 1.04];
+            %     [0.85, 2.7, 1.06];
+            %     [0.85, 2.7, 1.08];
+            %     [1.13, 2.59, 1.04];
+            %     [1.13, 2.59, 1.06];
+            %     [1.13, 2.59, 1.08];
+            % }; % WOKRING 8/9
 
             plot3(self.plateStack{1}(1), self.plateStack{1}(2), 1.1, 'x')
             plot3(self.plateStack{4}(1), self.plateStack{4}(2), 1.1, 'x')
             plot3(self.plateStack{7}(1), self.plateStack{7}(2), 1.1, 'x')
 
             self.plateFinal = {
-                [0.5, 2.0, 1.45];
-                [0.0, 2.0, 1.45];
-                [-0.5, 2.0, 1.45];
+                [0.5, 1.95, 1.45];
+                [0.0, 1.95, 1.45];
+                [-0.5, 1.95, 1.45];
             };
 
             plot3(self.plateFinal{1}(1), self.plateFinal{1}(2), 1.5, 'o')
@@ -88,12 +109,12 @@ classdef InitialisePlates < handle
 
             for i = 1:self.numOfPlates
                 self.initialTargetTransforms{i} = transl(self.plateLocations{i}(1:3));
-                self.initialTargetTransforms{i}(3,4) = self.initialTargetTransforms{i}(3,4) + self.pandaGripperOffset;
+                self.initialTargetTransforms{i}(3,4) = self.initialTargetTransforms{i}(3,4) + self.plateOffset;
                 self.safeInitialTargetTransforms{i} = self.initialTargetTransforms{i};
                 self.safeInitialTargetTransforms{i}(3,4) = self.safeInitialTargetTransforms{i}(3,4) + self.safeOffset;
 
                 self.stackTargetTransforms{i} = transl(self.plateStack{i}(1:3));
-                self.stackTargetTransforms{i}(1,4) = self.stackTargetTransforms{i}(1,4) + self.pandaGripperOffset;
+                self.stackTargetTransforms{i}(1,4) = self.stackTargetTransforms{i}(1,4) + self.plateOffset;
                 self.safeStackTargetTransforms{i} = self.stackTargetTransforms{i};
                 self.safeStackTargetTransforms{i}(3,4) = self.safeStackTargetTransforms{i}(3,4) + self.safeOffset;
 
@@ -101,7 +122,6 @@ classdef InitialisePlates < handle
             end
             for i = 1:3
                 self.finalTargetTransforms{i} = transl(self.plateFinal{i}(1:3));
-                self.finalTargetTransforms{i}(2,4) = self.finalTargetTransforms{i}(2,4) + self.pandaGripperOffset;
             end
         end
 

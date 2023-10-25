@@ -98,12 +98,11 @@ classdef LabAssignment2 < handle
         end
 
 
-
-
-         function InitialisePlateStacker(self)
+        function InitialisePlateStacker(self)
             self.objPlateStackers = InitialisePlateStacker(); % plot the plates in the workspace
 
             plateStackerNum = 1;
+
             for i = 1:3
                 for j = 1:3
                     baseTr = self.objPlateStackers.initialTargetTransforms{plateStackerNum};
@@ -119,7 +118,7 @@ classdef LabAssignment2 < handle
                     plateStackerNum = plateStackerNum + 1;
                 end
             end
-         end
+        end
 
 
         function RunRobot(self)                      
@@ -369,7 +368,22 @@ classdef LabAssignment2 < handle
             animate(self.plateModel.model, self.plateJoints);
         end
     
+% Below is the function to check collisions
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+       % function CheckCollisions(self)
+       % 
+       % 
+       %     for objectCoordinate <
+       %         % Stop robot movement
+       %         disp("Robot collision occured!! Oh No!!")
+       %     end
+       % 
+       % end
 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% MovePlateStacker function below 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         function MovePlateStacker(self)
             plateStackerPos = self.ur5End.T;

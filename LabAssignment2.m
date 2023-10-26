@@ -359,9 +359,9 @@ classdef LabAssignment2 < handle
                 self.UpdateGUI();
             end
             self.gui.UpdateGUI(self);
-            % if self.AnglesInQLims()
-            %     self.gui.UpdateSliders(self.pandaJointAngles);
-            % end
+            if self.AnglesInQLims()
+                self.gui.UpdateSliders(self.pandaJointAngles);
+            end
         end
 
         function MovePlates(self)
@@ -427,13 +427,13 @@ classdef LabAssignment2 < handle
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         function inLimits = AnglesInQLims(self)
             for i = 1:length(self.pandaJointAngles)
-                if self.pandaJointAngles(i) > self.panda.model.qlim(i,1) || self.pandaJointAngles(i) < self.panda.model.qlim(i,2)
-                    inLimits = true
-                else
-                    inLimits = false
-                    return
+                if self.pandaJointAngles(i) < self.panda.model.qlim(i,1) || self.pandaJointAngles(i) > self.panda.model.qlim(i,2)
+                    inLimits = false;
+                    return;
                 end
             end
+            inLimits = true;
+            return
         end
     end
 end

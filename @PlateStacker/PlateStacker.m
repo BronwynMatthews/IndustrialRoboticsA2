@@ -1,11 +1,11 @@
-classdef plateStacker < RobotBaseClass
+classdef PlateStacker < RobotBaseClass
     properties(Access = public)              
         plyFileNameStem = 'plateStackerRed'
     end
     
     methods
 %% Define robot Function 
-        function self = plateStacker(baseTr, colour)
+        function self = PlateStacker(baseTr, colour)
        
             self.CreateModel();
 

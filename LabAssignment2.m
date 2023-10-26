@@ -199,7 +199,7 @@ classdef LabAssignment2 < handle
                         end
                         pos = self.objPlates.plateStack{i - 3}(1:3);
                         pos(3) = pos(3) - 0.04;
-                        self.stack{stackCounter} = plateStacker(transl(pos), colour);
+                        self.stack{stackCounter} = PlateStacker(transl(pos), colour);
                         self.MoveUR5(stackCounter)
                         stackCounter = stackCounter + 1;
                     end
@@ -218,7 +218,7 @@ classdef LabAssignment2 < handle
             end
             pos = self.objPlates.plateStack{7}(1:3);
             pos(3) = pos(3) - 0.04;
-            self.stack{3} = plateStacker(transl(pos), colour);
+            self.stack{3} = PlateStacker(transl(pos), colour);
 
             self.MoveUR5(stackCounter);
 

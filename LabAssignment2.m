@@ -158,7 +158,7 @@ classdef LabAssignment2 < handle
 
             % pause(4);
 
-            for i = 1:self.objPlates.numOfPlates
+            for i = 4:self.objPlates.numOfPlates
                 disp(['Panda unstacking plate ', num2str(i)])
                 self.pandaState = 1;
                 self.ur5State = 1;
@@ -341,7 +341,7 @@ classdef LabAssignment2 < handle
             for i = 1:length(targetTransforms)
                 T1 = targetTransforms{i};
 
-                if i == 100 % not using RMRC
+                if i == 4 % not using RMRC
                     qMatrix = self.ResolvedMotionRateControl('linearUR5', T1)
                 else
                     angles = self.linearUR5.model.ikcon(T1, self.ur5JointAngles);
@@ -465,6 +465,8 @@ classdef LabAssignment2 < handle
             lims = robot.model.qlim;
             velocity = 0.25;
             deltaT = 0.050;  
+
+            rpy = tr2rpy(tr1)
             
             q0 = robot.model.fkine(q);
             q0 = q0.T;
@@ -472,7 +474,8 @@ classdef LabAssignment2 < handle
             endPoint = tr1(1:3,4)';
             dist = norm(endPoint - startPoint);
             t = dist/velocity;
-            steps = floor(t/deltaT)   % No. of steps for simulation
+            % steps = floor(t/deltaT);   % No. of steps for simulation
+            steps = 10;
             delta = 2*pi/steps; % Small angle change
             epsilon = 0.1;      % Threshold value for manipulability/Damped Least Squares
             W = diag([1 1 1 0.1 0.1 0.1]);    % Weighting matrix for the velocity vector
@@ -489,13 +492,14 @@ classdef LabAssignment2 < handle
             % 1.3) Set up trajectory, initial pose
             s = lspb(0,1,steps);                % Trapezoidal trajectory scalar
             for i=1:steps
-                x(1,i) = (1-s(i))*0.35 + s(i)*0.35; % Points in x
-                x(2,i) = (1-s(i))*-0.55 + s(i)*0.55; % Points in y
-                x(3,i) = 0.5 + 0.2*sin(i*delta); % Points in z
-                theta(1,i) = 0;                 % Roll angle 
-                theta(2,i) = 5*pi/9;            % Pitch angle
-                theta(3,i) = 0;                 % Yaw angle
+                x(1,i) = (1-s(i))*startPoint(1) + s(i)*endPoint(1);  % Linear interpolation in x
+                x(2,i) = (1-s(i))*startPoint(2) + s(i)*endPoint(2);  % Linear interpolation in y
+                x(3,i) = startPoint(3);  % Constant z-height
+                theta(1,i) = rpy(1);          % Constant Roll angle 
+                theta(2,i) = rpy(2);     % Constant Pitch angle
+                theta(3,i) = rpy(3);          % Constant Yaw angle
             end
+
              
             T = [rpy2r(theta(1,1),theta(2,1),theta(3,1)) x(:,1);zeros(1,3) 1];          % Create transformation of first point and angle
             q0 = zeros(1,n);                                                          % Initial guess for joint angles
@@ -512,7 +516,7 @@ classdef LabAssignment2 < handle
                 Rdot = (1/deltaT)*(Rd - Ra);                                                % Calculate rotation matrix error
                 S = Rdot*Ra';                                                           % Skew symmetric!
                 linear_velocity = (1/deltaT)*deltaX;
-                angular_velocity = [S(3,2);S(1,3);S(2,1)];                              % Check the structure of Skew Symmetric matrix!!
+                angular_velocity = [S(3,2);S(3,1);S(2,1)];                              % Check the structure of Skew Symmetric matrix!!
                 deltaTheta = tr2rpy(Rd*Ra');                                            % Convert rotation matrix to RPY angles
                 xdot = W*[linear_velocity;angular_velocity];                          	% Calculate end-effector velocity to reach next waypoint.
                 J = robot.model.jacob0(qMatrix(i,:));                 % Get Jacobian at current joint state

@@ -134,6 +134,8 @@ classdef LabAssignment2 < handle
             logData.Status{end+1} = 'Task Started';
             logData.Transform{end+1} = 'N/A';
 
+            pause(4);
+
             for i = 1:self.objPlates.numOfPlates
                 disp(['Panda unstacking plate ', num2str(i)])
                 self.pandaState = 1;

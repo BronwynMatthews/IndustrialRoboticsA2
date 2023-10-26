@@ -81,9 +81,9 @@ classdef InitialisePlates < handle
             %     [1.13, 2.59, 1.08];
             % }; % WOKRING 8/9
 
-            plot3(self.plateStack{1}(1), self.plateStack{1}(2), 1.1, 'x')
-            plot3(self.plateStack{4}(1), self.plateStack{4}(2), 1.1, 'x')
-            plot3(self.plateStack{7}(1), self.plateStack{7}(2), 1.1, 'x')
+            % plot3(self.plateStack{1}(1), self.plateStack{1}(2), 1.1, 'x')
+            % plot3(self.plateStack{4}(1), self.plateStack{4}(2), 1.1, 'x')
+            % plot3(self.plateStack{7}(1), self.plateStack{7}(2), 1.1, 'x')
 
             self.plateFinal = {
                 [0.5, 1.95, 1.45];
@@ -91,9 +91,9 @@ classdef InitialisePlates < handle
                 [-0.5, 1.95, 1.45];
             };
 
-            plot3(self.plateFinal{1}(1), self.plateFinal{1}(2), 1.5, 'o')
-            plot3(self.plateFinal{2}(1), self.plateFinal{2}(2), 1.5, 'o')
-            plot3(self.plateFinal{3}(1), self.plateFinal{3}(2), 1.5, 'o')
+            % plot3(self.plateFinal{1}(1), self.plateFinal{1}(2), 1.5, 'o')
+            % plot3(self.plateFinal{2}(1), self.plateFinal{2}(2), 1.5, 'o')
+            % plot3(self.plateFinal{3}(1), self.plateFinal{3}(2), 1.5, 'o')
         end
 
         function placePlates(self)

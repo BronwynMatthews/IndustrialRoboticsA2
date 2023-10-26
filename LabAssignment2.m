@@ -33,11 +33,14 @@ classdef LabAssignment2 < handle
             clc;
 
             hold on
+            
             self.InitialiseRobots();
+            self.gui = GUI(self);
+            self.gui.UpdateGUI(self);
             self.InitialiseEnvironment();
             self.InitialisePlates();
             % self.StartGui();
-            self.RunRobot();            
+            % self.RunRobot();            
         end
         
         function InitialiseRobots(self)
@@ -51,24 +54,43 @@ classdef LabAssignment2 < handle
 
         function StartGui(self)
             self.gui = GUI(self);
-            qMatrix = self.pandaJointAngles;
             tic;
-            while(1)
-                self.gui.UpdateGUI();
-                disp(['timestep ', num2str(toc)]);
-                if self.gui.jog
-                    tr = self.gui.StepRobot()
-                    qMatrix = self.panda.model.ikcon(tr)
-                    self.gui.UpdateSliders(qMatrix)
-                    self.panda.model.animate(qMatrix);
-                    self.gui.jog = false;
-                else
-                    qMatrix = self.gui.GetLinkValues();
-                    self.panda.model.animate(qMatrix);
-                end
-                self.UpdateRobots();
-                pause(0.5);
+            self.gui.UpdateGUI();
+            % while(1)
+            %     self.gui.UpdateGUI();
+            %     disp(['timestep ', num2str(toc)]);
+            %     if self.gui.jog
+            %         tr = self.gui.StepRobot()
+            %         qMatrix = self.panda.model.ikcon(tr)
+            %         self.gui.UpdateSliders(qMatrix)
+            %         self.panda.model.animate(qMatrix);
+            %         self.gui.jog = false;
+            %     else
+            %         qMatrix = self.gui.GetLinkValues();
+            %         self.panda.model.animate(qMatrix);
+            %     end
+            %     self.UpdateRobots();
+            %     pause(0.5);
+            % end
+        end
+
+        function UpdateGUI(self)
+            self.gui = GUI(self);
+            qMatrix = self.pandaJointAngles;    
+            self.gui.UpdateGUI(self);
+            disp(['timestep ', num2str(toc)]);
+            if self.gui.jog
+                tr = self.gui.StepRobot();
+                qMatrix = self.panda.model.ikcon(tr);
+                self.gui.UpdateSliders(qMatrix)
+                self.panda.model.animate(qMatrix);
+                self.gui.jog = false;
+            else
+                self.gui.UpdateSliders(qMatrix);
+                qMatrix = self.gui.GetLinkValues();
+                % self.panda.model.animate(qMatrix);
             end
+            % self.UpdateRobots();
         end
 
         function InitialiseEnvironment(self)
@@ -134,7 +156,7 @@ classdef LabAssignment2 < handle
             logData.Status{end+1} = 'Task Started';
             logData.Transform{end+1} = 'N/A';
 
-            pause(4);
+            % pause(4);
 
             for i = 1:self.objPlates.numOfPlates
                 disp(['Panda unstacking plate ', num2str(i)])
@@ -157,7 +179,9 @@ classdef LabAssignment2 < handle
                     logData.Time{end+1} = datestr(datetime('now'), 'yyyy-mm-dd HH:MM:SS'); % Log the time that the robot starts
                     logData.Status{end+1} = ['Panda picking/placing plate ', num2str(i), ' in State ', num2str(j)];
                     logData.Transform{end+1} = mat2str(self.objPlates.initialTargetTransforms{i}(1:3, 4).');
-
+                    
+                    
+                    
                     self.MoveToPos();
 
                     if (i == 4 && self.pandaState == 1) || (i == 7 && self.pandaState == 1)
@@ -298,11 +322,11 @@ classdef LabAssignment2 < handle
             targetTransforms{6} = targetTransforms{4};
             targetTransforms{7} = transl(0.6, 2.4, 1.4) * rpy2tr(180, -90, -90, 'deg');
 
-            for i = 1:length(targetTransforms)
-                pos = targetTransforms{i}(1:3,4);
-                pos = pos';
-                disp(['pos: ', num2str(i), ' xyz = ', num2str(pos)])
-            end
+            % for i = 1:length(targetTransforms)
+            %     pos = targetTransforms{i}(1:3,4);
+            %     pos = pos';
+            %     disp(['pos: ', num2str(i), ' xyz = ', num2str(pos)])
+            % end
 
 
             for i = 1:length(targetTransforms)
@@ -328,6 +352,15 @@ classdef LabAssignment2 < handle
             self.pandaEnd = self.panda.model.fkine(self.pandaJointAngles);
             self.ur5JointAngles = self.linearUR5.model.getpos();
             self.ur5End = self.linearUR5.model.fkine(self.ur5JointAngles);
+
+            % % self.gui = GUI(self);
+            % while self.gui.CheckEstop
+            %     pause(0.5);
+            %     self.UpdateGUI();
+            % end
+            % self.gui.UpdateGUI(self);
+            % self.pandaJointAngles
+            % self.gui.UpdateSliders(self.pandaJointAngles);
         end
 
         function MovePlates(self)

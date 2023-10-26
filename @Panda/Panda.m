@@ -1,7 +1,7 @@
 classdef Panda < RobotBaseClass
     properties(Access = public)   
         plyFileNameStem = 'Panda';
-        q0 = [0,-pi/3,0,pi,0,0,0]
+        q0 = [0,-pi/3,0,-0.5,0,0.6,0]
     end
     
     methods
@@ -15,6 +15,7 @@ function self = Panda(baseTr)
             self.model.base = self.model.base.T * baseTr * trotz(pi/2);
             
             self.PlotAndColourRobot();
+            % self.model.animate(self.q0)
             
             % self.model.teach();
             % self.model.teach(q0)

@@ -158,7 +158,7 @@ classdef LabAssignment2 < handle
 
             % pause(4);
 
-            for i = 4:self.objPlates.numOfPlates
+            for i = 1:self.objPlates.numOfPlates
                 disp(['Panda unstacking plate ', num2str(i)])
                 self.pandaState = 1;
                 self.ur5State = 1;

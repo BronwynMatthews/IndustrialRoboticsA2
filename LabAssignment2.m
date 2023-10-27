@@ -158,7 +158,7 @@ classdef LabAssignment2 < handle
 
             % pause(4);
 
-            for i = 1:self.objPlates.numOfPlates
+            for i = 4:self.objPlates.numOfPlates
                 disp(['Panda unstacking plate ', num2str(i)])
                 self.pandaState = 1;
                 self.ur5State = 1;
@@ -253,17 +253,17 @@ classdef LabAssignment2 < handle
                 case 4
                     disp('CASE 4')
                     targetPos = self.objPlates.safeStackTargetTransforms{self.plateCounter};
-                    rpy = rpy2tr(0, 180, 0, 'deg');
+                    rpy = rpy2tr(-90, 180, 90, 'deg');
                 case 5
                     disp('CASE 5')
                     targetPos = self.objPlates.stackTargetTransforms{self.plateCounter};
                     steps = 10;
-                    rpy = rpy2tr(0, 90, 180, 'deg');
+                    rpy = rpy2tr(-90, 180, 90, 'deg');
                 case 6
                     disp('CASE 6')
                     targetPos = self.objPlates.safeStackTargetTransforms{self.plateCounter};
                     steps = 10;
-                    rpy = rpy2tr(0, 90, 180, 'deg');
+                    rpy = rpy2tr(-90, 180, 90, 'deg');
             end
 
             robotXYZ = self.pandaEnd.T;
@@ -329,7 +329,7 @@ classdef LabAssignment2 < handle
             targetTransforms{4} = targetTransforms{5};
             targetTransforms{4}(2,4) = targetTransforms{4}(2,4) + 0.25;
             targetTransforms{6} = targetTransforms{4};
-            targetTransforms{7} = self.linearUR5.model.fkine(zeros(1,self.linearUR5.model.n));
+            targetTransforms{7} = self.linearUR5.model.fkine(self.linearUR5.q0);
 
             % for i = 1:length(targetTransforms)
             %     pos = targetTransforms{i}(1:3,4);
@@ -341,7 +341,7 @@ classdef LabAssignment2 < handle
             for i = 1:length(targetTransforms)
                 T1 = targetTransforms{i};
 
-                if i == 1000 % not using RMRC
+                if i == 100 % not using RMRC
                     qMatrix = self.ResolvedMotionRateControl('linearUR5', T1)
                 else
                     angles = self.linearUR5.model.ikcon(T1, self.ur5JointAngles);
@@ -349,7 +349,7 @@ classdef LabAssignment2 < handle
                 end
 
                 for j = 1:size(qMatrix,1)
-                    q = qMatrix(j,:)
+                    q = qMatrix(j,:);
                     self.linearUR5.model.animate(q);
                     if i >= 3 && i < 6
                         self.MovePlateStacker()
@@ -358,7 +358,7 @@ classdef LabAssignment2 < handle
                     drawnow();
                     pause(0.1);
 
-                end
+                 end
                 self.UpdateRobots();
             end
         end
@@ -393,11 +393,12 @@ classdef LabAssignment2 < handle
             % Apply the offset to the current position
             platePos(1:3, 4) = platePos(1:3, 4) + globalOffset;
 
-            if self.pandaState == 5
-                self.plateModel.model.base = platePos * troty(-pi/2);
-            else
-                self.plateModel.model.base = platePos * trotx(-pi/2);
-            end
+            % if self.pandaState == 5
+            %     self.plateModel.model.base = platePos * troty(-pi/2);
+            % else
+            %     self.plateModel.model.base = platePos * trotx(-pi/2);
+            % end
+            self.plateModel.model.base = platePos * trotx(-pi/2);
             animate(self.plateModel.model, self.plateJoints);
         end
 
@@ -458,14 +459,12 @@ classdef LabAssignment2 < handle
             else 
                 robot = self.linearUR5;
             end
-            q = robot.model.getpos()
+            q = robot.model.getpos();
+
             n = robot.model.n;
             lims = robot.model.qlim;
             velocity = 0.25;
             deltaT = 0.050;  
-            epsilon = 0.1;      % Threshold value for manipulability/Damped Least Squares
-            W = diag([1 1 1]);  % Weighting matrix for the velocity vector
-
             
             q0 = robot.model.fkine(q);
             q0 = q0.T;
@@ -473,64 +472,69 @@ classdef LabAssignment2 < handle
             endPoint = tr1(1:3,4)';
             dist = norm(endPoint - startPoint);
             t = dist/velocity;
-            steps = floor(t * 10);
-
+            steps = floor(t/deltaT)   % No. of steps for simulation
+            delta = 2*pi/steps; % Small angle change
+            epsilon = 0.1;      % Threshold value for manipulability/Damped Least Squares
+            W = diag([1 1 1 0.1 0.1 0.1]);    % Weighting matrix for the velocity vector
+            
+            % 1.2) Allocate array data
             m = zeros(steps,1);             % Array for Measure of Manipulability
-            qMatrix = zeros(steps,n);       % Array for joint angles
-            qdot = zeros(steps,3);          % Array for joint velocities
+            qMatrix = zeros(steps,n);       % Array for joint anglesR
+            qdot = zeros(steps,n);          % Array for joint velocities
             theta = zeros(3,steps);         % Array for roll-pitch-yaw angles
             x = zeros(3,steps);             % Array for x-y-z trajectory
+            positionError = zeros(3,steps); % For plotting trajectory error
+            angleError = zeros(3,steps);    % For plotting trajectory error
             
-
-            % Set up trajectory, initial pose
+            % 1.3) Set up trajectory, initial pose
             s = lspb(0,1,steps);                % Trapezoidal trajectory scalar
             for i=1:steps
-                x(1,i) = (1-s(i))*startPoint(1)+s(i)*endPoint(1); % Points in x
-                x(2,i) = (1-s(i))*startPoint(2)+s(i)*endPoint(2); % Points in y
-                x(3,i) = (1-s(i))*startPoint(3)+s(i)*endPoint(3); % Points in z
-                theta(1,i) = 0; % Roll angle
-                theta(2,i) = 0; % Pitch angle
-                theta(3,i) = 0; % Yaw angle
+                x(1,i) = (1-s(i))*0.35 + s(i)*0.35; % Points in x
+                x(2,i) = (1-s(i))*-0.55 + s(i)*0.55; % Points in y
+                x(3,i) = 0.5 + 0.2*sin(i*delta); % Points in z
+                theta(1,i) = 0;                 % Roll angle 
+                theta(2,i) = 5*pi/9;            % Pitch angle
+                theta(3,i) = 0;                 % Yaw angle
             end
-        
+             
             T = [rpy2r(theta(1,1),theta(2,1),theta(3,1)) x(:,1);zeros(1,3) 1];          % Create transformation of first point and angle
-            qMatrix(1,:) = robot.model.ikcon(T,q);                                     % Solve joint angles to achieve first waypoint
-        
-            % Track the trajectory with RMRC
+            q0 = zeros(1,n);                                                          % Initial guess for joint angles
+            qMatrix(1,:) = robot.model.ikcon(T,q);                                            % Solve joint angles to achieve first waypoint
+            
+            % 1.4) Track the trajectory with RMRC
             for i = 1:steps-1
-                T = robot.model.fkine(qMatrix(i,:));                                    % Get forward transformation at current joint state
-                T = T.T;
-                deltaX = x(:,i+1) - T(1:3,4);                                       	% Get position error from next waypoint
+                % UPDATE: fkine function now returns an SE3 object. To obtain the 
+                % Transform Matrix, access the variable in the object 'T' with '.T'.
+                T = robot.model.fkine(qMatrix(i,:)).T;                                           % Get forward transformation at current joint state
+                deltaX = x(:,i+1) - T(1:3,4);                                         	% Get position error from next waypoint
+                Rd = rpy2r(theta(1,i+1),theta(2,i+1),theta(3,i+1));                     % Get next RPY angles, convert to rotation matrix
+                Ra = T(1:3,1:3);                                                        % Current end-effector rotation matrix
+                Rdot = (1/deltaT)*(Rd - Ra);                                                % Calculate rotation matrix error
+                S = Rdot*Ra';                                                           % Skew symmetric!
                 linear_velocity = (1/deltaT)*deltaX;
-                xdot = W*linear_velocity;                                           	% Calculate end-effector velocity to reach next waypoint.
-                J = robot.model.jacob0(qMatrix(i,:));                                   % Get Jacobian at current joint state
-                J = J(1:3,1:3);
+                angular_velocity = [S(3,2);S(1,3);S(2,1)];                              % Check the structure of Skew Symmetric matrix!!
+                deltaTheta = tr2rpy(Rd*Ra');                                            % Convert rotation matrix to RPY angles
+                xdot = W*[linear_velocity;angular_velocity];                          	% Calculate end-effector velocity to reach next waypoint.
+                J = robot.model.jacob0(qMatrix(i,:));                 % Get Jacobian at current joint state
                 m(i) = sqrt(det(J*J'));
                 if m(i) < epsilon  % If manipulability is less than given threshold
-                    lambda = (1-m(i)/epsilon)*5E-2;
+                    lambda = (1 - m(i)/epsilon)*5E-2;
                 else
                     lambda = 0;
                 end
-                invJ = inv(J'*J+lambda*eye(3))*J';                                      % DLS Inverse
-                qdot(i,:) = (invJ*xdot)';                                               % Solve the RMRC equation (you may need to transpose the vector)
-                qlim = robot.model.qlim;
-                for j = 1:3                                                             % Loop through joints 1 to 3
-                    if J == 3
-                        [~, index] = min(abs(lims(:,1)-qMatrix(i,2)));
-                        [~, index2] = min(abs(lims(:,3)-qMatrix(i,2)));
-                        qlim(3,1) = lims(index,2);
-                        qlim(3,2) = lims(index2,4);
-                    end 
-                    if qMatrix(i,j) + deltaT*qdot(i,j) < qlim(j,1)                     % If next joint angle is lower than joint limit...
+                invJ = inv(J'*J + lambda *eye(n))*J';                                   % DLS Inverse
+                qdot(i,:) = (invJ*xdot)';                                                % Solve the RMRC equation (you may need to transpose the         vector)
+                for j = 1:n                                                             % Loop through joints 1 to 6
+                    if qMatrix(i,j) + deltaT*qdot(i,j) < lims(j,1)                     % If next joint angle is lower than joint limit...
                         qdot(i,j) = 0; % Stop the motor
-                    elseif qMatrix(i,j) + deltaT*qdot(i,j) > qlim(j,2)                 % If next joint angle is greater than joint limit ...
+                    elseif qMatrix(i,j) + deltaT*qdot(i,j) > lims(j,2)                 % If next joint angle is greater than joint limit ...
                         qdot(i,j) = 0; % Stop the motor
                     end
                 end
-                qMatrix(i+1,1:3) = qMatrix(i,1:3)+deltaT*qdot(i,:);                     % Update next joint state based on joint velocities
+                qMatrix(i+1,:) = qMatrix(i,:) + deltaT*qdot(i,:);                         	% Update next joint state based on joint velocities
+                positionError(:,i) = x(:,i+1) - T(1:3,4);                               % For plotting
+                angleError(:,i) = deltaTheta;                                           % For plotting
             end
-            
-            qMatrix(:,4) = -qMatrix(:,3);    
         end
     end
 end

@@ -3,6 +3,7 @@ classdef LinearUR5custom < RobotBaseClass
 
     properties(Access = public)              
         plyFileNameStem = 'LinearUR5';
+        q0 = [0 0 0 0 0 0 0]
     end
     
     methods
@@ -14,7 +15,8 @@ classdef LinearUR5custom < RobotBaseClass
             end
             self.model.base = self.model.base.T * baseTr * trotx(pi/2) * troty(pi/2);
             
-            self.PlotAndColourRobot();         
+            self.PlotAndColourRobot();
+            self.model.animate(self.q0);
         end
 
 

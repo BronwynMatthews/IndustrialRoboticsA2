@@ -158,7 +158,7 @@ classdef LabAssignment2 < handle
 
             % pause(4);
 
-            for i = 4:self.objPlates.numOfPlates
+            for i = 1:self.objPlates.numOfPlates
                 disp(['Panda unstacking plate ', num2str(i)])
                 self.pandaState = 1;
                 self.ur5State = 1;
@@ -370,7 +370,7 @@ classdef LabAssignment2 < handle
             self.ur5End = self.linearUR5.model.fkine(self.ur5JointAngles);
 
             self.gui = GUI(self);
-            while self.gui.CheckEstop
+            while self.gui.CheckEstop % || self.collision.collide
                 pause(0.5);
                 self.UpdateGUI();
             end
@@ -495,6 +495,7 @@ classdef LabAssignment2 < handle
                 x(1,i) = (1-s(i))*startPoint(1) + s(i)*endPoint(1);  % Linear interpolation in x
                 x(2,i) = (1-s(i))*startPoint(2) + s(i)*endPoint(2);  % Linear interpolation in y
                 x(3,i) = startPoint(3);  % Constant z-height
+                % x(3,i) = (1-s(i))*startPoint(3) + s(i)*endPoint(3);  % Constant z-height
                 theta(1,i) = rpy(1);          % Constant Roll angle 
                 theta(2,i) = rpy(2);     % Constant Pitch angle
                 theta(3,i) = rpy(3);          % Constant Yaw angle

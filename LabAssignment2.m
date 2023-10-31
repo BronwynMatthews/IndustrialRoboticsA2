@@ -37,12 +37,12 @@ classdef LabAssignment2 < handle
             hold on
 
             self.InitialiseRobots();
-            self.gui = GUI(self);
-            self.gui.UpdateGUI(self);
-            self.InitialiseEnvironment();
-            self.InitialisePlates();
-            % self.StartGui();
-            self.RunRobot();
+            self.gui = GUI(self.linearUR5, self.panda);
+            % self.gui.UpdateGUI(self);
+            % self.InitialiseEnvironment();
+            % self.InitialisePlates();
+            % % self.StartGui();
+            % self.RunRobot();
         end
 
         function InitialiseRobots(self)
@@ -123,29 +123,6 @@ classdef LabAssignment2 < handle
                 end
             end
         end
-
-
-        % function InitialisePlateStacker(self)
-        %     self.objPlateStackers = InitialisePlateStacker(); % plot the plates in the workspace
-        %
-        %     plateStackerNum = 1;
-        %
-        %     for i = 1:3
-        %         for j = 1:3
-        %             baseTr = self.objPlateStackers.initialTargetTransforms{plateStackerNum};
-        %             switch i
-        %                 case 1
-        %                     colour = 'red';
-        %                 case 2
-        %                     colour = 'blue';
-        %                 case 3
-        %                     colour = 'green';
-        %             end
-        %             self.plates{plateStackerNum} = Plate(baseTr, colour);
-        %             plateStackerNum = plateStackerNum + 1;
-        %         end
-        %     end
-        % end
 
 
         function RunRobot(self)
@@ -272,11 +249,6 @@ classdef LabAssignment2 < handle
             end
             
             targetPos = targetPos * rpy
-            
-
-            robotXYZ = self.pandaEnd.T;
-            robotXYZ = robotXYZ(1:3,4)';
-            targetXYZ = targetPos(1:3,4)';
 
             if self.pandaState == 1 || self.pandaState == 4 || self.pandaState == 6 
                 qFinal = self.panda.model.ikcon(targetPos, self.pandaJointAngles);
@@ -284,23 +256,8 @@ classdef LabAssignment2 < handle
                 self.AnimatePanda(qMatrix);
                 
             else
-                % for i = 1:length(targetXYZ)
-                %     cartesianPath(:, i) = linspace(robotXYZ(i), targetXYZ(i), steps);
-                % end
-                % for i = 1:length(cartesianPath)
-                %     t = transl(cartesianPath(i,:)) * rpy;
-                %     pandaAngles = self.panda.model.ikcon(t, self.pandaJointAngles);
-                %     self.panda.model.animate(pandaAngles);
-                %     self.UpdateRobots();
-                %     if self.pandaState == 3 || self.pandaState == 4 || self.pandaState == 5
-                %         self.MovePlates();
-                %     end
-                %     drawnow();
-                %     % pause(0.1);
-                % TEST
-                qMatrix = ResolvedMotionRateControl(self.panda, targetPos, 'vertical')
+                qMatrix = ResolvedMotionRateControl(self.panda, targetPos, 'vertical');
                 self.AnimatePanda(qMatrix);
-                % TEST
             end
         end
 

@@ -1,8 +1,4 @@
 classdef LabAssignment2 < handle
-    %LABASSIGNMENT2 Summary of this class goes here
-    %   Detailed explanation goes here
-    % Check
-
     properties
         panda;
         linearUR5;
@@ -24,8 +20,9 @@ classdef LabAssignment2 < handle
         plateStackerModel;
         plateJoints = [0,0];
         plateStackerJoints = [0,0];
-        gui;
+        guiObj;
         stack;
+        startup = true;
     end
 
     methods
@@ -34,15 +31,16 @@ classdef LabAssignment2 < handle
             % clf;
             clc;
 
+            h = findall(0, 'Type', 'figure', 'Name', 'MATLAB App');
+            close(h);
+
             hold on
 
             self.InitialiseRobots();
-            self.gui = GUI(self.linearUR5, self.panda);
-            % self.gui.UpdateGUI(self);
-            % self.InitialiseEnvironment();
-            % self.InitialisePlates();
-            % % self.StartGui();
-            % self.RunRobot();
+            self.guiObj = GUI(self.linearUR5, self.panda);
+            self.InitialiseEnvironment();
+            self.InitialisePlates();
+            self.RunRobot();
         end
 
         function InitialiseRobots(self)
@@ -57,45 +55,16 @@ classdef LabAssignment2 < handle
             self.gripper2 = PandaGripper(self.pandaEnd, 2);
         end
 
-        function StartGui(self)
-            self.gui = GUI(self);
-            tic;
-            self.gui.UpdateGUI();
-            % while(1)
-            %     self.gui.UpdateGUI();
-            %     disp(['timestep ', num2str(toc)]);
-            %     if self.gui.jog
-            %         tr = self.gui.StepRobot()
-            %         qMatrix = self.panda.model.ikcon(tr)
-            %         self.gui.UpdateSliders(qMatrix)
-            %         self.panda.model.animate(qMatrix);
-            %         self.gui.jog = false;
-            %     else
-            %         qMatrix = self.gui.GetLinkValues();
-            %         self.panda.model.animate(qMatrix);
-            %     end
-            %     self.UpdateRobots();
-            %     pause(0.5);
-            % end
-        end
-
-        function UpdateGUI(self)
-            self.gui = GUI(self);
-            qMatrix = self.pandaJointAngles;
-            self.gui.UpdateGUI(self);
-            disp(['timestep ', num2str(toc)]);
-            if self.gui.jog
-                tr = self.gui.StepRobot();
-                qMatrix = self.panda.model.ikcon(tr);
-                self.gui.UpdateSliders(qMatrix)
-                self.panda.model.animate(qMatrix);
-                self.gui.jog = false;
-            else
-                self.gui.UpdateSliders(qMatrix);
-                qMatrix = self.gui.GetLinkValues();
-                % self.panda.model.animate(qMatrix);
-            end
-            % self.UpdateRobots();
+        function CheckGUI(self)
+            self.guiObj.UpdateGUI;
+            while ~self.guiObj.running
+                if ~self.guiObj.estop
+                    [tempQMatrix, robot] = self.guiObj.GetSliderValues();
+                    robot.model.animate(tempQMatrix);
+                end
+                pause(0.1);
+                self.guiObj.UpdateGUI;
+            end           
         end
 
         function InitialiseEnvironment(self)
@@ -124,9 +93,7 @@ classdef LabAssignment2 < handle
             end
         end
 
-
         function RunRobot(self)
-            % input('Press enter to begin')
             self.UpdateRobots();
             stackCounter = 1;
             % Initialise log variable
@@ -137,8 +104,6 @@ classdef LabAssignment2 < handle
             logData.Time{end+1} = datestr(datetime('now'), 'yyyy-mm-dd HH:MM:SS'); % Log the time that the robot starts
             logData.Status{end+1} = 'Task Started';
             logData.Transform{end+1} = 'N/A';
-
-            % pause(4);
 
             for i = 1:self.objPlates.numOfPlates
                 disp(['Panda unstacking plate ', num2str(i)])
@@ -161,8 +126,6 @@ classdef LabAssignment2 < handle
                     logData.Time{end+1} = datestr(datetime('now'), 'yyyy-mm-dd HH:MM:SS'); % Log the time that the robot starts
                     logData.Status{end+1} = ['Panda picking/placing plate ', num2str(i), ' in State ', num2str(j)];
                     logData.Transform{end+1} = mat2str(self.objPlates.initialTargetTransforms{i}(1:3, 4).');
-
-
 
                     self.MoveToPos();
 
@@ -248,7 +211,7 @@ classdef LabAssignment2 < handle
                     rpy = rpy2tr(-90, 180, 90, 'deg');
             end
             
-            targetPos = targetPos * rpy
+            targetPos = targetPos * rpy;
 
             if self.pandaState == 1 || self.pandaState == 4 || self.pandaState == 6 
                 qFinal = self.panda.model.ikcon(targetPos, self.pandaJointAngles);
@@ -342,15 +305,11 @@ classdef LabAssignment2 < handle
             self.ur5JointAngles = self.linearUR5.model.getpos();
             self.ur5End = self.linearUR5.model.fkine(self.ur5JointAngles);
 
-            % self.gui = GUI(self);
-            % while self.gui.CheckEstop % || self.collision.collide
-            %     pause(0.5);
-            %     self.UpdateGUI();
-            % end
-            % self.gui.UpdateGUI(self);
-            % if self.AnglesInQLims()
-            %     self.gui.UpdateSliders(self.pandaJointAngles);
-            % end
+            if ~self.startup()
+                self.CheckGUI();
+            end
+
+            self.startup = false;           
         end
 
         function MovePlates(self)
@@ -400,16 +359,7 @@ classdef LabAssignment2 < handle
             animate(self.plateStackerModel.model, self.plateStackerJoints);
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        function inLimits = AnglesInQLims(self)
-            for i = 1:length(self.pandaJointAngles)
-                if self.pandaJointAngles(i) < self.panda.model.qlim(i,1) || self.pandaJointAngles(i) > self.panda.model.qlim(i,2)
-                    inLimits = false;
-                    return;
-                end
-            end
-            inLimits = true;
-            return
-        end
+        
 
         function AnimateGripper(self, state)
             self.gripper1.model.base = self.gripper1.model.base.T;

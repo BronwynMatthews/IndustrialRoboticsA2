@@ -30,7 +30,7 @@ classdef Plate < RobotBaseClass
                 self.plyFileNameStem = 'newsize_plateGreen';
             end
            
-            self.PlotAndColourRobot();    
+            self.PlotAndColourRobot();   
             
         end
 

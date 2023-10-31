@@ -6,15 +6,17 @@ classdef LabAssignment2 < handle
     properties
         panda;
         linearUR5;
+        gripper1;
+        gripper2;
         objPlates;
         plateCounter = 1;
         plateStackerCounter = 1;
         pandaJointAngles;
         pandaEnd;
-        pandaGriperOffset = 0.12; % RADIUS OF A PLATE
+        pandaGripperOffset = 0.12; % RADIUS OF A PLATE
         ur5JointAngles;
         ur5End;
-        ur5GriperOffset = 0.25;
+        ur5GripperOffset = 0.25;
         pandaState;
         ur5State;
         plates;
@@ -50,6 +52,9 @@ classdef LabAssignment2 < handle
             self.linearUR5 = LinearUR5custom(transl(0.4, 2.6, 0.95));
 
             self.UpdateRobots();
+
+            self.gripper1 = PandaGripper(self.pandaEnd, 1);
+            self.gripper2 = PandaGripper(self.pandaEnd, 2);
         end
 
         function StartGui(self)
@@ -265,31 +270,37 @@ classdef LabAssignment2 < handle
                     steps = 10;
                     rpy = rpy2tr(-90, 180, 90, 'deg');
             end
+            
+            targetPos = targetPos * rpy
+            
 
             robotXYZ = self.pandaEnd.T;
             robotXYZ = robotXYZ(1:3,4)';
             targetXYZ = targetPos(1:3,4)';
 
-            if self.pandaState == 2 || self.pandaState == 3 || self.pandaState == 5 || self.pandaState == 6
-                for i = 1:length(targetXYZ)
-                    cartesianPath(:, i) = linspace(robotXYZ(i), targetXYZ(i), steps);
-                end
-                for i = 1:length(cartesianPath)
-                    t = transl(cartesianPath(i,:)) * rpy;
-                    pandaAngles = self.panda.model.ikcon(t, self.pandaJointAngles);
-                    self.panda.model.animate(pandaAngles);
-                    self.UpdateRobots();
-                    if self.pandaState == 3 || self.pandaState == 4 || self.pandaState == 5
-                        self.MovePlates();
-                    end
-                    drawnow();
-                    % pause(0.1);
-                end
-
-            else
-                qFinal = self.panda.model.ikcon(targetPos * rpy, self.pandaJointAngles);
+            if self.pandaState == 1 || self.pandaState == 4 || self.pandaState == 6 
+                qFinal = self.panda.model.ikcon(targetPos, self.pandaJointAngles);
                 qMatrix = jtraj(self.pandaJointAngles, qFinal, steps);
                 self.AnimatePanda(qMatrix);
+                
+            else
+                % for i = 1:length(targetXYZ)
+                %     cartesianPath(:, i) = linspace(robotXYZ(i), targetXYZ(i), steps);
+                % end
+                % for i = 1:length(cartesianPath)
+                %     t = transl(cartesianPath(i,:)) * rpy;
+                %     pandaAngles = self.panda.model.ikcon(t, self.pandaJointAngles);
+                %     self.panda.model.animate(pandaAngles);
+                %     self.UpdateRobots();
+                %     if self.pandaState == 3 || self.pandaState == 4 || self.pandaState == 5
+                %         self.MovePlates();
+                %     end
+                %     drawnow();
+                %     % pause(0.1);
+                % TEST
+                qMatrix = ResolvedMotionRateControl(self.panda, targetPos, 'vertical')
+                self.AnimatePanda(qMatrix);
+                % TEST
             end
         end
 
@@ -299,6 +310,9 @@ classdef LabAssignment2 < handle
                 self.UpdateRobots();
                 if self.pandaState == 3 || self.pandaState == 4 || self.pandaState == 5
                     self.MovePlates();
+                    self.AnimateGripper('close')
+                else
+                    self.AnimateGripper('open')
                 end
                 drawnow();
                 % pause(0.1);
@@ -309,40 +323,42 @@ classdef LabAssignment2 < handle
             self.plateStackerModel = self.stack{stack};
 
             targetTransforms = cell(7);
-            targetTransforms{2} = self.plateStackerModel.model.base.T;
+            targetTransforms{1} = self.plateStackerModel.model.base.T;
             if stack == 1
-                targetTransforms{2}(1,4) = targetTransforms{2}(1,4) - self.ur5GriperOffset;
-                targetTransforms{3} = targetTransforms{2} * rpy2tr(0, -90, 0, 'deg'); % 0 -90 0 = plates upside down
-                targetTransforms{2} = targetTransforms{2} * rpy2tr(0, -90, 90, 'deg');           
-                targetTransforms{1} = targetTransforms{2};
-                targetTransforms{1}(1,4) = targetTransforms{1}(1,4) - 0.15;
+                targetTransforms{1}(1,4) = targetTransforms{1}(1,4) - self.ur5GripperOffset - 0.15;
+                targetTransforms{1} = targetTransforms{1} * rpy2tr(0, -90, 90, 'deg');  
+                
+                targetTransforms{2} = targetTransforms{1};
+                targetTransforms{2}(1,4) = targetTransforms{2}(1,4) + 0.15;
+
+                targetTransforms{3} = targetTransforms{2};
+                targetTransforms{3} = targetTransforms{2} * rpy2tr(-90, 0, 0, 'deg');
             else
-                targetTransforms{2}(2,4) = targetTransforms{2}(2,4) + self.ur5GriperOffset;
-                targetTransforms{3} = targetTransforms{2} * rpy2tr(0, -90, 0, 'deg'); % 0 -90 0 = plates upside down
-                targetTransforms{2} = targetTransforms{2} * rpy2tr(0, -90, 0, 'deg');           
-                targetTransforms{1} = targetTransforms{2};
-                targetTransforms{1}(2,4) = targetTransforms{1}(2,4) + 0.15;
+                targetTransforms{1}(2,4) = targetTransforms{1}(2,4) + self.ur5GripperOffset + 0.15;
+                targetTransforms{1} = targetTransforms{1} * rpy2tr(0, -90, 0, 'deg');  
+
+                targetTransforms{2} = targetTransforms{1};
+                targetTransforms{2}(2,4) = targetTransforms{2}(2,4) - 0.15;
+
+                targetTransforms{3} = targetTransforms{2};
             end
             targetTransforms{3}(3,4) = targetTransforms{3}(3,4) + 0.45;
-            targetTransforms{5} = self.objPlates.finalTargetTransforms{stack} * rpy2tr(0, -90, 90, 'deg');
-            targetTransforms{5}(2,4) = targetTransforms{5}(2,4) + self.ur5GriperOffset;
-            targetTransforms{4} = targetTransforms{5};
-            targetTransforms{4}(2,4) = targetTransforms{4}(2,4) + 0.25;
+
+            targetTransforms{4} = self.objPlates.finalTargetTransforms{stack} * rpy2tr(0, -90, 90, 'deg');
+            targetTransforms{4}(2,4) = targetTransforms{4}(2,4) + self.ur5GripperOffset + 0.25;
+
+            targetTransforms{5} = targetTransforms{4};
+            targetTransforms{5}(2,4) = targetTransforms{5}(2,4) - 0.25;
+
             targetTransforms{6} = targetTransforms{4};
+
             targetTransforms{7} = self.linearUR5.model.fkine(self.linearUR5.q0);
-
-            % for i = 1:length(targetTransforms)
-            %     pos = targetTransforms{i}(1:3,4);
-            %     pos = pos';
-            %     disp(['pos: ', num2str(i), ' xyz = ', num2str(pos)])
-            % end
-
 
             for i = 1:length(targetTransforms)
                 T1 = targetTransforms{i};
 
-                if i == 4 % not using RMRC
-                    qMatrix = self.ResolvedMotionRateControl('linearUR5', T1)
+                if i == 4 % using RMRC
+                    qMatrix = ResolvedMotionRateControl(self.linearUR5, T1, 'horizontal');
                 else
                     angles = self.linearUR5.model.ikcon(T1, self.ur5JointAngles);
                     qMatrix = jtraj(self.ur5JointAngles, angles, 10);
@@ -369,15 +385,15 @@ classdef LabAssignment2 < handle
             self.ur5JointAngles = self.linearUR5.model.getpos();
             self.ur5End = self.linearUR5.model.fkine(self.ur5JointAngles);
 
-            self.gui = GUI(self);
-            while self.gui.CheckEstop % || self.collision.collide
-                pause(0.5);
-                self.UpdateGUI();
-            end
-            self.gui.UpdateGUI(self);
-            if self.AnglesInQLims()
-                self.gui.UpdateSliders(self.pandaJointAngles);
-            end
+            % self.gui = GUI(self);
+            % while self.gui.CheckEstop % || self.collision.collide
+            %     pause(0.5);
+            %     self.UpdateGUI();
+            % end
+            % self.gui.UpdateGUI(self);
+            % if self.AnglesInQLims()
+            %     self.gui.UpdateSliders(self.pandaJointAngles);
+            % end
         end
 
         function MovePlates(self)
@@ -388,16 +404,11 @@ classdef LabAssignment2 < handle
             zDirection = platePos(1:3, 3);
 
             % Compute the offset in the global frame
-            globalOffset = zDirection * (self.pandaGriperOffset);
+            globalOffset = zDirection * (self.pandaGripperOffset);
 
             % Apply the offset to the current position
             platePos(1:3, 4) = platePos(1:3, 4) + globalOffset;
 
-            % if self.pandaState == 5
-            %     self.plateModel.model.base = platePos * troty(-pi/2);
-            % else
-            %     self.plateModel.model.base = platePos * trotx(-pi/2);
-            % end
             self.plateModel.model.base = platePos * trotx(-pi/2);
             animate(self.plateModel.model, self.plateJoints);
         end
@@ -415,10 +426,6 @@ classdef LabAssignment2 < handle
         % end
 
 
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-        % MovePlateStacker function below
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         function MovePlateStacker(self)
             self.UpdateRobots();
             plateStackerPos = self.ur5End.T;
@@ -427,17 +434,11 @@ classdef LabAssignment2 < handle
             zDirection = plateStackerPos(1:3, 3);
 
             % Compute the offset in the global frame
-            % globalOffset = zDirection * (self.ur5GriperOffset)
-            globalOffset = zDirection * self.ur5GriperOffset;
+            globalOffset = zDirection * self.ur5GripperOffset;
 
             % Apply the offset to the current position
             plateStackerPos(1:3, 4) = plateStackerPos(1:3, 4) + globalOffset;
 
-            % if self.linearUR5 == 1
-            %     self.plateStackerModel.model.base = plateStackerPos * troty(-pi/2);
-            % else
-            %     self.plateStackerModel.model.base = plateStackerPos * trotx(-pi/2);
-            % end
             self.plateStackerModel.model.base = plateStackerPos * troty(pi/2);
             animate(self.plateStackerModel.model, self.plateStackerJoints);
         end
@@ -453,93 +454,22 @@ classdef LabAssignment2 < handle
             return
         end
 
-        function qMatrix = ResolvedMotionRateControl(self, model, tr1)
-            if strcmp(model, 'Panda')
-                robot = self.panda;
-            else 
-                robot = self.linearUR5;
-            end
-            q = robot.model.getpos();
+        function AnimateGripper(self, state)
+            self.gripper1.model.base = self.gripper1.model.base.T;
+            self.gripper1.model.base = self.pandaEnd.T * trotx(pi);
+            self.gripper2.model.base = self.gripper1.model.base;
 
-            n = robot.model.n;
-            lims = robot.model.qlim;
-            velocity = 0.25;
-            deltaT = 0.050;  
-
-            rpy = tr2rpy(tr1)
-            
-            q0 = robot.model.fkine(q);
-            q0 = q0.T;
-            startPoint = q0(1:3,4)';
-            endPoint = tr1(1:3,4)';
-            dist = norm(endPoint - startPoint);
-            t = dist/velocity;
-            % steps = floor(t/deltaT);   % No. of steps for simulation
-            steps = 10;
-            delta = 2*pi/steps; % Small angle change
-            epsilon = 0.1;      % Threshold value for manipulability/Damped Least Squares
-            W = diag([1 1 1 0.1 0.1 0.1]);    % Weighting matrix for the velocity vector
-            
-            % 1.2) Allocate array data
-            m = zeros(steps,1);             % Array for Measure of Manipulability
-            qMatrix = zeros(steps,n);       % Array for joint anglesR
-            qdot = zeros(steps,n);          % Array for joint velocities
-            theta = zeros(3,steps);         % Array for roll-pitch-yaw angles
-            x = zeros(3,steps);             % Array for x-y-z trajectory
-            positionError = zeros(3,steps); % For plotting trajectory error
-            angleError = zeros(3,steps);    % For plotting trajectory error
-            
-            % 1.3) Set up trajectory, initial pose
-            s = lspb(0,1,steps);                % Trapezoidal trajectory scalar
-            for i=1:steps
-                x(1,i) = (1-s(i))*startPoint(1) + s(i)*endPoint(1);  % Linear interpolation in x
-                x(2,i) = (1-s(i))*startPoint(2) + s(i)*endPoint(2);  % Linear interpolation in y
-                x(3,i) = startPoint(3);  % Constant z-height
-                % x(3,i) = (1-s(i))*startPoint(3) + s(i)*endPoint(3);  % Constant z-height
-                theta(1,i) = rpy(1);          % Constant Roll angle 
-                theta(2,i) = rpy(2);     % Constant Pitch angle
-                theta(3,i) = rpy(3);          % Constant Yaw angle
+            self.gripper1.model.base = self.gripper1.model.base.T * troty(-pi/2) * trotz(pi) * trotx(-pi/2);
+            self.gripper2.model.base = self.gripper2.model.base.T * troty(pi/2) * trotx(-pi/2);
+ 
+            if strcmp(state, 'open')
+                self.gripper1.model.animate(0.03)
+                self.gripper2.model.animate(0.03)
+            else
+                self.gripper1.model.animate(0.005)
+                self.gripper2.model.animate(0.005)
             end
 
-             
-            T = [rpy2r(theta(1,1),theta(2,1),theta(3,1)) x(:,1);zeros(1,3) 1];          % Create transformation of first point and angle
-            q0 = zeros(1,n);                                                          % Initial guess for joint angles
-            qMatrix(1,:) = robot.model.ikcon(T,q);                                            % Solve joint angles to achieve first waypoint
-            
-            % 1.4) Track the trajectory with RMRC
-            for i = 1:steps-1
-                % UPDATE: fkine function now returns an SE3 object. To obtain the 
-                % Transform Matrix, access the variable in the object 'T' with '.T'.
-                T = robot.model.fkine(qMatrix(i,:)).T;                                           % Get forward transformation at current joint state
-                deltaX = x(:,i+1) - T(1:3,4);                                         	% Get position error from next waypoint
-                Rd = rpy2r(theta(1,i+1),theta(2,i+1),theta(3,i+1));                     % Get next RPY angles, convert to rotation matrix
-                Ra = T(1:3,1:3);                                                        % Current end-effector rotation matrix
-                Rdot = (1/deltaT)*(Rd - Ra);                                                % Calculate rotation matrix error
-                S = Rdot*Ra';                                                           % Skew symmetric!
-                linear_velocity = (1/deltaT)*deltaX;
-                angular_velocity = [S(3,2);S(3,1);S(2,1)];                              % Check the structure of Skew Symmetric matrix!!
-                deltaTheta = tr2rpy(Rd*Ra');                                            % Convert rotation matrix to RPY angles
-                xdot = W*[linear_velocity;angular_velocity];                          	% Calculate end-effector velocity to reach next waypoint.
-                J = robot.model.jacob0(qMatrix(i,:));                 % Get Jacobian at current joint state
-                m(i) = sqrt(det(J*J'));
-                if m(i) < epsilon  % If manipulability is less than given threshold
-                    lambda = (1 - m(i)/epsilon)*5E-2;
-                else
-                    lambda = 0;
-                end
-                invJ = inv(J'*J + lambda *eye(n))*J';                                   % DLS Inverse
-                qdot(i,:) = (invJ*xdot)';                                                % Solve the RMRC equation (you may need to transpose the         vector)
-                for j = 1:n                                                             % Loop through joints 1 to 6
-                    if qMatrix(i,j) + deltaT*qdot(i,j) < lims(j,1)                     % If next joint angle is lower than joint limit...
-                        qdot(i,j) = 0; % Stop the motor
-                    elseif qMatrix(i,j) + deltaT*qdot(i,j) > lims(j,2)                 % If next joint angle is greater than joint limit ...
-                        qdot(i,j) = 0; % Stop the motor
-                    end
-                end
-                qMatrix(i+1,:) = qMatrix(i,:) + deltaT*qdot(i,:);                         	% Update next joint state based on joint velocities
-                positionError(:,i) = x(:,i+1) - T(1:3,4);                               % For plotting
-                angleError(:,i) = deltaTheta;                                           % For plotting
-            end
         end
     end
 end

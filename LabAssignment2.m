@@ -31,10 +31,14 @@ classdef LabAssignment2 < handle
             % clf;
             clc;
 
+            
+
             h = findall(0, 'Type', 'figure', 'Name', 'MATLAB App');
             close(h);
 
             hold on
+
+            
 
             self.InitialiseRobots();
             self.guiObj = GUI(self.linearUR5, self.panda);

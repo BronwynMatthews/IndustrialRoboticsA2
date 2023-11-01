@@ -31,17 +31,13 @@ classdef LabAssignment2 < handle
             % clf;
             clc;
 
-            
-
             h = findall(0, 'Type', 'figure', 'Name', 'MATLAB App');
             close(h);
 
             hold on
 
-            
-
             self.InitialiseRobots();
-            self.guiObj = GUI(self.linearUR5, self.panda);
+            % self.guiObj = GUI(self.linearUR5, self.panda);
             self.InitialiseEnvironment();
             self.InitialisePlates();
             self.RunRobot();
@@ -72,7 +68,23 @@ classdef LabAssignment2 < handle
         end
 
         function InitialiseEnvironment(self)
-            Environment(); % Build the workspace for the robot
+           Environment(); % Build the workspace for the robot
+
+            % Create an instance of the Rectangles class
+            rectangles = Rectangles();
+            rectangles.draw(gca);
+            % lightCurtains = LightCurtains();
+            % lightCurtains.draw(gca);
+            
+            % Define parameters for the rectangular prism
+            % lower = [-2.5, 3.3, 0];
+            % upper = [4, 3.4, 3];
+            % plotOptions.plotVerts = true;
+            % plotOptions.plotEdges = true;
+            % plotOptions.plotFaces = true;
+            % 
+            % % Call the RectangularPrism method
+            % [vertex, face, faceNormals] = rectangles.RectangularPrism(lower, upper, plotOptions, gca);
         end
 
         function InitialisePlates(self)

@@ -37,7 +37,7 @@ classdef LabAssignment2 < handle
             hold on
 
             self.InitialiseRobots();
-            % self.guiObj = GUI(self.linearUR5, self.panda);
+            self.guiObj = GUI(self.linearUR5, self.panda);
             self.InitialiseEnvironment();
             self.InitialisePlates();
             self.RunRobot();
@@ -323,6 +323,8 @@ classdef LabAssignment2 < handle
 
             if ~self.startup()
                 self.CheckGUI();
+                % check collision
+                % check lightcurtain
             end
 
             self.startup = false;           

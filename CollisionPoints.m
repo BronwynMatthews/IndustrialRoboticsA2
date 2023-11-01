@@ -32,12 +32,14 @@ classdef CollisionPoints < handle
 
             if nargin < 4
                 axis_h = gca;
+                disp('here')
                 if nargin < 3
                     plotOptions.plotVerts = false;
                     plotOptions.plotEdges = true;
                     plotOptions.plotFaces = true;
                 end
             end
+            axis_h = gca;
             hold(axis_h, 'on');
 
 
@@ -135,10 +137,10 @@ classdef CollisionPoints < handle
         
         % Used to get robot link values (Wk5 again)
         function tr = GetRobotLinkPosition(self, robot, q)
-            tr = zeros(4, 4, robot.n+1);
-            tr(:,:,1) = robot.base;
-            L = robot.links;
-            for i = 1:robot.n
+            tr = zeros(4, 4, robot.model.n+1);
+            tr(:,:,1) = robot.model.base;
+            L = robot.model.links;
+            for i = 1:robot.model.n
                 tr(:,:,i+1) = tr(:,:,i) * trotz(q(i) + L(i).offset) * transl(0,0,L(i).d) * transl(L(i).a,0,0) * trotx(L(i).alpha);
             end
         end

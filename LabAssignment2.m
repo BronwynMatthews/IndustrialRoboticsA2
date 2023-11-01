@@ -76,8 +76,8 @@ classdef LabAssignment2 < handle
            Environment(); % Build the workspace for the robot
 
             % Create an instance of the CollisionPoints class
-            collisionRectangles = CollisionPoints();
-            collisionRectangles.draw(gca);
+            self.collisionRectangles = CollisionPoints();
+            self.collisionRectangles.draw(gca);
         end
 
         function InitialisePlates(self)
@@ -333,15 +333,20 @@ classdef LabAssignment2 < handle
                     self.guiObj.estop = true;
                 end
 
+               %  if self.collisionRectangles.IsCollision(self.panda, self.pandaJointAngles) || self.collisionRectangles.IsCollision(self.linearUR5, self.ur5JointAngles) % || self.collisionRectangles.CheckCollision(self.gripper1)
+               %      disp('Collision detected!');
+               %      self.guiObj.estop = true;
+               % end
+
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 % ERROR HERE, PLEASE LOOK AT, WILL FIX TMRW AT YOURS
                 % OTHERWISE
                 % i HAVE ADDED IN A BUNCH OF FUNCTIONS TOO PLEASE SEE
-               if self.collisionRectangles.IsCollision(self.panda, self.pandaJointAngles) || self.collisionRectangles.IsCollision(self.ur5, self.ur5JointAngles) % || self.collisionRectangles.CheckCollision(self.gripper1)
-                    disp('Collision detected!');
-                    self.guiObj.estop = true;
-               end
+               % if self.collisionRectangles.IsCollision(self.panda, self.pandaJointAngles) || self.collisionRectangles.IsCollision(self.linearUR5, self.ur5JointAngles) % || self.collisionRectangles.CheckCollision(self.gripper1)
+               %      disp('Collision detected!');
+               %      self.guiObj.estop = true;
+               % end
                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

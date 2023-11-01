@@ -9,7 +9,7 @@ n = robot.model.n;
 axis([-0.5 0.5 -0.5 0.6 0.0 0.8]);
 hold on
 
-q0 = [0 -90 0 -90 -90 0];
+q0 = [0 -90 0 -90 0 0];
 q0 = deg2rad(q0);
 
 robot.model.animate(q0);
@@ -17,8 +17,8 @@ robot.model.animate(q0);
 plateOffset = 0.1;
 
 initialStack = {
-    [0.2 0.2 0.1]; 
-    [0.2 0.2 0.1];
+    [0.3 -0.1 0.1]; 
+    [0.4 -0.3 0.1];
     % [0.2 0.2 0.1];
 };
 
@@ -38,89 +38,100 @@ for i = 1:length(trFinal)
     trFinal{i} = transl(finalStack{i});
 end
 
+% for i = -180:90:180
+%     for j = -180:90:180
+%         for k = -180:90:180
+% 
+%             % xyz = robot.model.fkine(jointAngles);
+%             % xyz = xyz.T;
+%             % xyz = xyz(1:3,4)'
+%             % point = initialStack{1}(:)'
+%             % dist = norm(xyz, point);
+%             % % if abs(dist) <= 0.005
+%                 i
+%                 j
+%                 k
+%                 robot.model.animate(jointAngles)
+%                 drawnow();
+%                 pause(1);
+%             % end
+% 
+%         end
+%     end
+% end
+
+%
+robot.model.animate(q0);
+drawnow();
+pause(0.5);
+tr = trStack{1} * rpy2tr(-90, 0, 180, 'deg');
+tr(2,4) = tr(2,4) + plateOffset + 0.2;
+jointAngles = robot.model.ikcon(tr, q0);
+robot.model.animate(jointAngles)
+drawnow();
+
+                %%
 
 
 targetTransforms = cell(13,1);
-stack = 1;
 
 
-    targetTransforms{1} = trStack{stack} * rpy2tr(-90, -180, -90, 'deg');
-    targetTransforms{1}(1,4) = targetTransforms{1}(1,4) - plateOffset - 0.2;
+targetTransforms{1} = trStack{1} * rpy2tr(-90, 0, 180, 'deg');
+targetTransforms{1}(2,4) = targetTransforms{1}(2,4) + plateOffset + 0.2;
 
-    targetTransforms{2} = trStack{1} * rpy2tr(-90, -180, -90, 'deg');
-    targetTransforms{2}(1,4) = targetTransforms{2}(1,4) - plateOffset;
+targetTransforms{2} = trStack{1} * rpy2tr(-90, 0, 180, 'deg');
+targetTransforms{2}(2,4) = targetTransforms{2}(2,4) + plateOffset;
 
-    targetTransforms{3} = targetTransforms{2} * rpy2tr(90, -90, -90, 'deg');
-    targetTransforms{3}(3,4) = targetTransforms{3}(3,4) + 0.2;
+targetTransforms{3} = targetTransforms{2};
+targetTransforms{3}(3,4) = targetTransforms{3}(3,4) + 0.2;
 
-    targetTransforms{4} = trFinal{stack} * rpy2tr(90, 0, 0, 'deg');
-    targetTransforms{4}(2,4) = targetTransforms{4}(2,4) + plateOffset + 0.2;
+targetTransforms{4} = trFinal{1} * rpy2tr(-90, 0, 180, 'deg');
+targetTransforms{4}(2,4) = targetTransforms{4}(2,4) + plateOffset + 0.2;
 
-    targetTransforms{5} = trFinal{stack} * rpy2tr(90, 0, 0, 'deg');
-    targetTransforms{5}(2,4) = targetTransforms{5}(2,4) + plateOffset;
+targetTransforms{5} = trFinal{1} * rpy2tr(-90, 0, 180, 'deg');
+targetTransforms{5}(2,4) = targetTransforms{5}(2,4) + plateOffset;
 
-    targetTransforms{6} = targetTransforms{4};
+targetTransforms{6} = targetTransforms{4};
 
-    targetTransforms{7} = robot.model.fkine(q0);
-    targetTransforms{7} = targetTransforms{7}.T;
+targetTransforms{7} = trStack{2} * rpy2tr(-90, 0, 180, 'deg');
+targetTransforms{7}(2,4) = targetTransforms{7}(2,4) + plateOffset + 0.2;
 
-    targetTransforms{8} = trStack{2} * rpy2tr(-90, -180, -90, 'deg');
-    targetTransforms{8}(1,4) = targetTransforms{8}(1,4) - plateOffset - 0.2;
+targetTransforms{8} = trStack{2} * rpy2tr(-90, 0, 180, 'deg');
+targetTransforms{8}(2,4) = targetTransforms{8}(2,4) + plateOffset;
 
-    targetTransforms{9} = trStack{2} * rpy2tr(-90, -180, -90, 'deg');
-    targetTransforms{9}(1,4) = targetTransforms{9}(1,4) - plateOffset;
+targetTransforms{9} = targetTransforms{8};
+targetTransforms{9}(3,4) = targetTransforms{9}(3,4) + 0.2;
 
-    targetTransforms{10} = targetTransforms{9} * rpy2tr(90, -90, -90, 'deg');
-    targetTransforms{10}(3,4) = targetTransforms{10}(3,4) + 0.2;
+targetTransforms{10} = targetTransforms{4};
 
-    targetTransforms{11} = trFinal{2} * rpy2tr(90, 0, 0, 'deg');
-    targetTransforms{11}(2,4) = targetTransforms{11}(2,4) + plateOffset + 0.2;
+targetTransforms{11} = trFinal{2} * rpy2tr(-90, 0, 180, 'deg');
+targetTransforms{11}(2,4) = targetTransforms{11}(2,4) + plateOffset + 0.2;
 
-    targetTransforms{12} = trFinal{2} * rpy2tr(90, 0, 0, 'deg');
-    targetTransforms{12}(2,4) = targetTransforms{12}(2,4) + plateOffset;
+targetTransforms{12} = trFinal{2} * rpy2tr(-90, 0, 180, 'deg');
+targetTransforms{12}(2,4) = targetTransforms{12}(2,4) + plateOffset;
 
-    targetTransforms{13} = targetTransforms{11};
-  
+targetTransforms{13} = targetTransforms{11};
 
-
-steps = 10;
-
-qMatrix = zeros(steps, n);
-
-% robot = UR3;
-
-realJointStates = cell(13,1);
+realJointStates = cell(14,1);
+realJointStates{14} = q0;
 
 robot.model.animate(q0);
+drawnow();
+pause(0.5)
 
-for i = 1:length(targetTransforms)
-% for i = 1:1
-i
+for i = 1:13
+    i
     tr = targetTransforms{i};
     jointAngles = robot.model.ikcon(tr, robot.model.getpos());
     realJointStates{i} = jointAngles;
-    % robot.model.teach(jointAngles)
-    % if i == 2 || i == 5 
-    %     qMatrix = ResolvedMotionRateControl(robot, tr, 'horizontal');
-    % else
-        % qMatrix = jtraj(robot.model.getpos(), jointAngles, 10);
-    % end
-    % for j = 1:length(qMatrix)
-    %     robot.model.animate(qMatrix(j, :)); 
-    %     drawnow();
-    % 
-    %     pause(0.1);
-    % end
     robot.model.animate(jointAngles)
     drawnow();
     pause(1);
-    % xyz = robot.model.fkine(robot.model.getpos());
-    % rpy = tr2rpy(xyz);
-    % round(rad2deg(rpy))
-    % pause(1)
 end
+robot.model.animate(q0);
+drawnow();
+pause(0.5)
 
-% testAngles = realJointStates{1}
 
 
 

@@ -44,7 +44,7 @@ classdef LabAssignment2 < handle
             self.guiObj = GUI(self.linearUR5, self.panda);
             self.InitialiseEnvironment();
             self.InitialisePlates();
-            self.person = Person(transl(2.5,0,0));
+            
             self.RunRobot();
         end
 
@@ -78,6 +78,8 @@ classdef LabAssignment2 < handle
             % Create an instance of the CollisionPoints class
             self.collisionRectangles = CollisionPoints();
             self.collisionRectangles.draw(gca);
+
+            self.person = Person(transl(2.5,0,0));
         end
 
         function InitialisePlates(self)

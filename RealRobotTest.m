@@ -182,11 +182,11 @@ for i = 1:7
     disp('goal sent')
     sendGoal(client,goal);
 
+    final = realJointStates{i};
     pos = (jointStateSubscriber.LatestMessage.Position)';
 
-    while ~all(abs(pos(:) - realJointStates{i}(:)) < 0.05)
-        disp('here')
-        pause(1)
+    while ~all(abs(pos - final) <= 0.1)
+        pause(0.1)
         pos = (jointStateSubscriber.LatestMessage.Position)'; % Update joint positions
     end
 

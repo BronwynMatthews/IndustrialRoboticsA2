@@ -317,21 +317,29 @@ classdef LabAssignment2 < handle
 
             if ~self.startup()
                 self.CheckGUI();
-                tr = self.person.model.base;
-                tr = tr.T;
-                self.personPos = tr(1:3,4)';
-                self.personPos(2) = self.personPos(2) + 0.05;
-                self.person.model.base = transl(self.personPos) * trotz(pi/2);
-                self.person.model.animate(0);
-                drawnow();
-                
-                curtainDist = abs(tr(2,4) - 1.8);
 
-
-                if curtainDist < 0.25 
-                    % within set distance to x,y of the light curtain
-                    self.guiObj.estop = true;
+                if isvalid(self.person)
+                    tr = self.person.model.base;
+                    tr = tr.T;
+                    self.personPos = tr(1:3,4)';
+                    self.personPos(2) = self.personPos(2) + 0.05;
+                    self.person.model.base = transl(self.personPos) * trotz(pi/2);
+                    self.person.model.animate(0);
+                    drawnow();
+                    
+                    curtainDist = abs(tr(2,4) - 1.8);
+                    
+                    if curtainDist < 0.25 
+                        % within set distance to x,y of the light curtain
+                        self.guiObj.estop = true;
+                        try
+                            delete(self.person);
+                        end
+                    end
                 end
+
+
+                
 
                %  if self.collisionRectangles.IsCollision(self.panda, self.pandaJointAngles) || self.collisionRectangles.IsCollision(self.linearUR5, self.ur5JointAngles) % || self.collisionRectangles.CheckCollision(self.gripper1)
                %      disp('Collision detected!');

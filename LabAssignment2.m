@@ -17,6 +17,7 @@ classdef LabAssignment2 < handle
         pandaState;
         ur5State;
         plates;
+        collisionRectangles;
         person;
         plateModel;
         plateStackerModel;
@@ -50,7 +51,7 @@ classdef LabAssignment2 < handle
         function InitialiseRobots(self)
             self.panda = Panda(transl(1.6, 3.0, 0.95));
 
-            %%  below change to the new linear ur5 (with gripper attachment)
+            % below change to the new linear ur5 (with gripper attachment)
             self.linearUR5 = LinearUR5custom(transl(0.4, 2.6, 0.95));
 
             self.UpdateRobots();
@@ -74,21 +75,9 @@ classdef LabAssignment2 < handle
         function InitialiseEnvironment(self)
            Environment(); % Build the workspace for the robot
 
-            % Create an instance of the Rectangles class
-            rectangles = Rectangles();
-            rectangles.draw(gca);
-            % lightCurtains = LightCurtains();
-            % lightCurtains.draw(gca);
-            
-            % Define parameters for the rectangular prism
-            % lower = [-2.5, 3.3, 0];
-            % upper = [4, 3.4, 3];
-            % plotOptions.plotVerts = true;
-            % plotOptions.plotEdges = true;
-            % plotOptions.plotFaces = true;
-            % 
-            % % Call the RectangularPrism method
-            % [vertex, face, faceNormals] = rectangles.RectangularPrism(lower, upper, plotOptions, gca);
+            % Create an instance of the CollisionPoints class
+            collisionRectangles = CollisionPoints();
+            collisionRectangles.draw(gca);
         end
 
         function InitialisePlates(self)
@@ -133,6 +122,7 @@ classdef LabAssignment2 < handle
 
 
                 % self.movePanda();
+
                 for j = 1:6
                     % STATE 1 is panda moving to safe position above initial plate position (WITHOUT plate)
                     % STATE 2 is panda picking up plate from initial plate position
@@ -324,9 +314,6 @@ classdef LabAssignment2 < handle
             self.pandaEnd = self.panda.model.fkine(self.pandaJointAngles);
             self.ur5JointAngles = self.linearUR5.model.getpos();
             self.ur5End = self.linearUR5.model.fkine(self.ur5JointAngles);
-            % MOVE SMALL AMOUNT HERE
-            
-
 
             if ~self.startup()
                 self.CheckGUI();
@@ -346,8 +333,18 @@ classdef LabAssignment2 < handle
                     self.guiObj.estop = true;
                 end
 
-                % check collision
-                % check lightcurtain
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % ERROR HERE, PLEASE LOOK AT, WILL FIX TMRW AT YOURS
+                % OTHERWISE
+                % i HAVE ADDED IN A BUNCH OF FUNCTIONS TOO PLEASE SEE
+               if self.collisionRectangles.IsCollision(self.panda, self.pandaJointAngles) || self.collisionRectangles.IsCollision(self.ur5, self.ur5JointAngles) % || self.collisionRectangles.CheckCollision(self.gripper1)
+                    disp('Collision detected!');
+                    self.guiObj.estop = true;
+               end
+               %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+               %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
             end
 
             self.startup = false;           
@@ -370,19 +367,6 @@ classdef LabAssignment2 < handle
             animate(self.plateModel.model, self.plateJoints);
         end
 
-        % Below is the function to check collisions
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        % function CheckCollisions(self)
-        %
-        %
-        %     for objectCoordinate <
-        %         % Stop robot movement
-        %         disp("Robot collision occured!! Oh No!!")
-        %     end
-        %
-        % end
-
-
         function MovePlateStacker(self)
             self.UpdateRobots();
             plateStackerPos = self.ur5End.T;
@@ -399,9 +383,7 @@ classdef LabAssignment2 < handle
             self.plateStackerModel.model.base = plateStackerPos * troty(pi/2);
             animate(self.plateStackerModel.model, self.plateStackerJoints);
         end
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
-
         function AnimateGripper(self, state)
             self.gripper1.model.base = self.gripper1.model.base.T;
             self.gripper1.model.base = self.pandaEnd.T * trotx(pi);
@@ -417,7 +399,6 @@ classdef LabAssignment2 < handle
                 self.gripper1.model.animate(0.005)
                 self.gripper2.model.animate(0.005)
             end
-
         end
     end
 end

@@ -1,39 +1,42 @@
-% does this need to be a class, thinking of leaving it as a function within
-% the space to be called upon?? 
-
-function result = IsCollision(robot, qMatrix, objectPoints, collisionThreshold)
+function result = IsCollision(robot, qMatrix, collisionPoints, ~)
     if nargin < 4
-        collisionThreshold = 0.02; % collision threshold
+        collisionThreshold = 0.02; % default collision threshold
     end
+    
     result = false;
     
-    % test if the robot (cycling through the links) is 
     for qIndex = 1:size(qMatrix,1)
-        tr = GetLinkPoses(qMatrix(qIndex,:), robot);
+        tr = GetRobotTransforms(robot, qMatrix(qIndex, :));
 
-        for i = 1:size(tr, 3)
-            linkPoint = tr(1:3, 4, i);
+        for linkIndex = 1:size(tr, 3)-1
+            linkStart = tr(1:3, 4, linkIndex);
+            linkEnd = tr(1:3, 4, linkIndex + 1);
             
-            % loop through array of object points (might change this)
-            for j = 1:size(objectPoints, 1)
-                objectPoint = objectPoints(j, :);
-                distance = norm(linkPoint - objectPoint');
+            for rectIndex = 1:length(collisionPoints.rectangles)
+                rectangle = collisionPoints.rectangles{rectIndex};
+                [vertex, face, faceNormals] = collisionPoints.RectangularPrism(rectangle.lower, rectangle.upper, rectangle.plotOptions);
                 
-                if distance <= collisionThreshold
-                    result = true;
-                    return;
+                for faceIndex = 1:size(face,1)
+                    vertOnPlane = vertex(face(faceIndex,1)',:);
+                    [intersectP, check] = LinePlaneIntersection(faceNormals(faceIndex,:), vertOnPlane, linkStart', linkEnd');
+                    
+                    if check == 1 && IsIntersectionPointInsideTriangle(intersectP, vertex(face(faceIndex,:)',:))
+                        plot3(intersectP(1), intersectP(2), intersectP(3), 'r*');
+                        disp('Collision Detected');
+                        result = true;
+                        return;
+                    end
                 end
             end
         end
+    end
+end
 
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% how we will implement this 
-% robot = % (robot model that is being checked for collisions)
-% qMatrix = % (trajectory)
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+function tr = GetRobotTransforms(robot, q)
+    tr = zeros(4, 4, robot.n+1);
+    tr(:,:,1) = robot.base;
+    L = robot.links;
+    for i = 1:robot.n
+        tr(:,:,i+1) = tr(:,:,i) * trotz(q(i) + L(i).offset) * transl(0,0,L(i).d) * transl(L(i).a,0,0) * trotx(L(i).alpha);
     end
 end

@@ -9,6 +9,7 @@ classdef LabAssignment2 < handle
         plateStackerCounter = 1;
         pandaJointAngles;
         pandaEnd;
+        personPos;
         pandaGripperOffset = 0.12; % RADIUS OF A PLATE
         ur5JointAngles;
         ur5End;
@@ -16,6 +17,7 @@ classdef LabAssignment2 < handle
         pandaState;
         ur5State;
         plates;
+        person;
         plateModel;
         plateStackerModel;
         plateJoints = [0,0];
@@ -35,11 +37,13 @@ classdef LabAssignment2 < handle
             close(h);
 
             hold on
-
+            
+            
             self.InitialiseRobots();
             self.guiObj = GUI(self.linearUR5, self.panda);
             self.InitialiseEnvironment();
             self.InitialisePlates();
+            self.person = Person(transl(2.5,0,0));
             self.RunRobot();
         end
 
@@ -320,9 +324,28 @@ classdef LabAssignment2 < handle
             self.pandaEnd = self.panda.model.fkine(self.pandaJointAngles);
             self.ur5JointAngles = self.linearUR5.model.getpos();
             self.ur5End = self.linearUR5.model.fkine(self.ur5JointAngles);
+            % MOVE SMALL AMOUNT HERE
+            
+
 
             if ~self.startup()
                 self.CheckGUI();
+                tr = self.person.model.base;
+                tr = tr.T;
+                self.personPos = tr(1:3,4)';
+                self.personPos(2) = self.personPos(2) + 0.05;
+                self.person.model.base = transl(self.personPos) * trotz(pi/2);
+                self.person.model.animate(0);
+                drawnow();
+                
+                curtainDist = abs(tr(2,4) - 1.8);
+
+
+                if curtainDist < 0.25 
+                    % within set distance to x,y of the light curtain
+                    self.guiObj.estop = true;
+                end
+
                 % check collision
                 % check lightcurtain
             end

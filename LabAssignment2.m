@@ -26,7 +26,18 @@ classdef LabAssignment2 < handle
         guiObj;
         stack;
         startup = true;
-        flashCounter = 1;
+        flash = true;
+        lightCurtains;
+
+        personPoint1;
+        personPoint2;
+
+        redLight1;
+        redLight2;
+        greenLight1;
+        greenLight2;
+        blueLight1;
+        blueLight2;
 
         collisionRectangles = {
             struct('lower', [-2.5, 3.25, 0], 'upper', [4, 3.6, 2.1]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)), % Wall
@@ -35,7 +46,6 @@ classdef LabAssignment2 < handle
             struct('lower', [-3.25, 2.3, 0], 'upper', [-1.75, 3.15, 1.95]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)) % Fridge
             % struct('lower', [0.8, 2.6, 0], 'upper', [1.3, 3.2, 1.95]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)) % Fridge
         };
-
         rectPrismData;
 
     end
@@ -74,11 +84,13 @@ classdef LabAssignment2 < handle
 
         function CheckGUI(self)
             self.guiObj.UpdateGUI;
+            self.FlashLights();
             while ~self.guiObj.running
                 if ~self.guiObj.estop
                     [tempQMatrix, robot] = self.guiObj.GetSliderValues();
                     robot.model.animate(tempQMatrix);
                 end
+                self.FlashLights();
                 pause(0.1);
                 self.guiObj.UpdateGUI;
             end           
@@ -88,6 +100,9 @@ classdef LabAssignment2 < handle
            Environment(); % Build the workspace for the robot
 
             self.person = Person(transl(2.5,0,0));
+            self.personPoint1 = [2.5, 0, 0.5];
+
+            self.lightCurtains = LightCurtains();
 
             self.rectPrismData = cell(length(self.collisionRectangles),3);
             
@@ -341,45 +356,80 @@ classdef LabAssignment2 < handle
                     tr = self.person.model.base;
                     tr = tr.T;
                     self.personPos = tr(1:3,4)';
+                    self.personPoint2 = self.personPos;
+                    self.personPoint2(3) = self.personPoint2(3) + 0.5;
                     self.personPos(2) = self.personPos(2) + 0.05;
                     self.person.model.base = transl(self.personPos) * trotz(pi/2);
                     self.person.model.animate(0);
                     drawnow();
                     
-                    curtainDist = abs(tr(2,4) - 1.8);
-                    
-                    if curtainDist < 0.25 
-                        % within set distance to x,y of the light curtain
-                        self.guiObj.estop = true;
-                        try
-                            delete(self.person);
+                    for i = 1:1
+                        [intersectionPoint, check] = LinePlaneIntersection(self.lightCurtains.normals(i,:), self.lightCurtains.midPoints(i,:), self.personPoint1, self.personPoint2);
+                        % check
+                        % intersectionPoint
+                        % self.personPoint2
+                        if check == 1
+                            if intersectionPoint(1) > self.lightCurtains.xLims(i,1) && intersectionPoint(1) < self.lightCurtains.xLims(i,2)
+                                if intersectionPoint(2) > self.lightCurtains.yLims(i,1) && intersectionPoint(2) < self.lightCurtains.yLims(i,2)
+                                    if intersectionPoint(3) > self.lightCurtains.zLims(i,1) && intersectionPoint(3) < self.lightCurtains.zLims(i,2)
+
+                                        disp('light curtain collision')
+                                        self.guiObj.estop = true;
+                                        try
+                                            delete(self.person);
+                                        end
+                                    end
+                                end
+                            end
                         end
                     end
+
+                    % if curtainDist < 0.25 
+                    %     % within set distance to x,y of the light curtain
+                    %     self.guiObj.estop = true;
+                    %     try
+                    %         delete(self.person);
+                    %     end
+                    % end
                 end
 
                 if IsCollision(self.panda, self.pandaJointAngles, self.rectPrismData) || IsCollision(self.linearUR5, self.ur5JointAngles, self.rectPrismData ) % || self.collisionRectangles.CheckCollision(self.gripper1)
                     disp('Collision detected!');
                     self.guiObj.estop = true;
                 else
-                    disp('no collisions detected')
+                    % disp('no collisions detected')
                 end
-
-                % FLASH LIGHTS
-                if self.guiObj.estop
-                    %RED
-                    
-                elseif self.guiObj.running
-                    %GREEN
-                end
-
-
-
-                self.flashCounter = self.flashCounter + 1;
-
             end
             self.startup = false;    
+        end
 
-            
+        function FlashLights(self)
+            if self.flash
+                    if self.guiObj.estop 
+                        %RED
+                        self.redLight1 = PlaceObject('LightOnRed_fridge.ply', [-1.7, 3, 1.6]);
+                        self.redLight2 = PlaceObject('LightOnRed_backWall.ply', [2.1, 3.25, 1.6]);
+                        
+                    elseif self.guiObj.running
+                        %GREEN
+                        self.greenLight1 = PlaceObject('LightOnGreen_fridge.ply', [-1.7, 3, 1.6]);
+                        self.greenLight2 = PlaceObject('LightOnGreen_backWall.ply', [2.1, 3.25, 1.6]);
+                    else
+                        %BLUE
+                        self.blueLight1 = PlaceObject('LightOnBlue_fridge.ply', [-1.7, 3, 1.6]);
+                        self.blueLight2 = PlaceObject('LightOnBlue_backWall.ply', [2.1, 3.25, 1.6]);
+                    end
+                else
+                    try
+                        delete(self.redLight1);
+                        delete(self.redLight2);
+                        delete(self.greenLight1);
+                        delete(self.greenLight2);
+                        delete(self.blueLight1);
+                        delete(self.blueLight2);                       
+                    end
+            end
+            self.flash = ~self.flash;
         end
 
         function MovePlates(self)

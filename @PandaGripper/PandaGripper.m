@@ -27,14 +27,14 @@ classdef PandaGripper < RobotBaseClass
                 self.model.base = self.model.base.T * troty(pi/2) * trotx(-pi/2);
             end
 
-            % self.PlotAndColourRobot();  
-            self.model.plot(self.closeGripper, 'nowrist', 'nobase', 'nojoints', 'noshadow'); 
+            self.PlotAndColourRobot();  
+            % self.model.plot(self.closeGripper, 'nowrist', 'nobase', 'nojoints', 'noshadow'); 
         end
 
         %% Create the plate model
         function CreateModel(self)   
 
-            link(1) = Link([0      0        0.03         0    1]); 
+            link(1) = Link([0      0        0         0    1]); 
                        
             % Incorporate joint limits
             link(1).qlim = [0.005 0.03];

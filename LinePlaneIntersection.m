@@ -5,7 +5,6 @@
 % Check == 2 if the segment lies in the plane (always intersecting)
 % Check == 3 if there is intersection point which lies outside line segment
 function [intersectionPoint,check] = LinePlaneIntersection(planeNormal,pointOnPlane,point1OnLine,point2OnLine)
-    
     intersectionPoint = [0 0 0];
     u = point2OnLine - point1OnLine;
     w = point1OnLine - pointOnPlane;

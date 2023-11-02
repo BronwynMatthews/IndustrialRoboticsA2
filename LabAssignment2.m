@@ -17,7 +17,7 @@ classdef LabAssignment2 < handle
         pandaState;
         ur5State;
         plates;
-        collisionRectangles;
+        % collisionRectangles;
         person;
         plateModel;
         plateStackerModel;
@@ -26,6 +26,18 @@ classdef LabAssignment2 < handle
         guiObj;
         stack;
         startup = true;
+        collisionCount = 1;
+
+        collisionRectangles = {
+            struct('lower', [-2.5, 3.25, 0], 'upper', [4, 3.6, 2.1]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)), % Wall
+            struct('lower', [-1.1, 1.5, 1.40], 'upper', [1.2, 2.15, 1.45]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)) % Plate stacker bench location
+            struct('lower', [-1.7, 1, 0.8], 'upper', [1.7, 3.25, 0.9]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)) % Bench both robots mounted too
+            struct('lower', [-3.25, 2.3, 0], 'upper', [-1.75, 3.15, 1.95]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)) % Fridge
+            % struct('lower', [0.8, 2.6, 0], 'upper', [1.3, 3.2, 1.95]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)) % Fridge
+        };
+
+        rectPrismData;
+
     end
 
     methods
@@ -76,10 +88,19 @@ classdef LabAssignment2 < handle
            Environment(); % Build the workspace for the robot
 
             % Create an instance of the CollisionPoints class
-            self.collisionRectangles = CollisionPoints();
-            self.collisionRectangles.draw(gca);
+            % self.collisionRectangles = CollisionPoints();
+            % self.collisionRectangles.draw(gca);
 
             self.person = Person(transl(2.5,0,0));
+
+            self.rectPrismData = cell(length(self.collisionRectangles),3);
+            
+            for i = 1:length(self.collisionRectangles)
+                [tempVertex, tempFace, tempFaceNormals] = RectangularPrism(self.collisionRectangles{i}.lower, self.collisionRectangles{i}.upper);
+                self.rectPrismData{i,1} = tempVertex;
+                self.rectPrismData{i,2} = tempFace;
+                self.rectPrismData{i,3} = tempFaceNormals;
+            end
         end
 
         function InitialisePlates(self)
@@ -340,14 +361,13 @@ classdef LabAssignment2 < handle
                     end
                 end
 
-
-                
-
-               %  if self.collisionRectangles.IsCollision(self.panda, self.pandaJointAngles) || self.collisionRectangles.IsCollision(self.linearUR5, self.ur5JointAngles) % || self.collisionRectangles.CheckCollision(self.gripper1)
-               %      disp('Collision detected!');
-               %      self.guiObj.estop = true;
-               % end
-
+                if IsCollision(self.panda, self.pandaJointAngles, self.rectPrismData) || IsCollision(self.linearUR5, self.ur5JointAngles, self.rectPrismData ) % || self.collisionRectangles.CheckCollision(self.gripper1)
+                    disp('Collision detected!');
+                    self.guiObj.estop = true;
+                else
+                    disp('no collisions detected')
+                end
+                self.collisionCount = self.collisionCount + 1;
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                 % ERROR HERE, PLEASE LOOK AT, WILL FIX TMRW AT YOURS
@@ -361,8 +381,9 @@ classdef LabAssignment2 < handle
                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
             end
+            self.startup = false;    
 
-            self.startup = false;           
+            
         end
 
         function MovePlates(self)

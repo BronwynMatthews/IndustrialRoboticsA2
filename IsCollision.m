@@ -1,8 +1,6 @@
-function result = IsCollision(robot, qMatrix, collisionPoints, ~)
-    if nargin < 4
-        collisionThreshold = 0.02; % default collision threshold
-    end
-    
+function result = IsCollision(robot, qMatrix, rectPrismData)
+    % collisionThreshold = 0.02;
+
     result = false;
     
     for qIndex = 1:size(qMatrix,1)
@@ -12,9 +10,13 @@ function result = IsCollision(robot, qMatrix, collisionPoints, ~)
             linkStart = tr(1:3, 4, linkIndex);
             linkEnd = tr(1:3, 4, linkIndex + 1);
             
-            for rectIndex = 1:length(collisionPoints.rectangles)
-                rectangle = collisionPoints.rectangles{rectIndex};
-                [vertex, face, faceNormals] = collisionPoints.RectangularPrism(rectangle.lower, rectangle.upper, rectangle.plotOptions);
+            for rectIndex = length(rectPrismData)
+                % rectangle = collisionPoints.rectangles{rectIndex};
+                % [vertex, face, faceNormals] = rectPrismData{rectIndex};
+                vertex = rectPrismData{rectIndex,1};
+                face = rectPrismData{rectIndex,2};
+                faceNormals = rectPrismData{rectIndex,3};
+
                 
                 for faceIndex = 1:size(face,1)
                     vertOnPlane = vertex(face(faceIndex,1)',:);
@@ -33,10 +35,10 @@ function result = IsCollision(robot, qMatrix, collisionPoints, ~)
 end
 
 function tr = GetRobotTransforms(robot, q)
-    tr = zeros(4, 4, robot.n+1);
-    tr(:,:,1) = robot.base;
-    L = robot.links;
-    for i = 1:robot.n
+    tr = zeros(4, 4, robot.model.n+1);
+    tr(:,:,1) = robot.model.base;
+    L = robot.model.links;
+    for i = 1:robot.model.n
         tr(:,:,i+1) = tr(:,:,i) * trotz(q(i) + L(i).offset) * transl(0,0,L(i).d) * transl(L(i).a,0,0) * trotx(L(i).alpha);
     end
 end

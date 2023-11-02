@@ -116,6 +116,7 @@ classdef CollisionPoints < handle
 
                     for rectIndex = 1:length(self.collisionRectangles)
                         rectangle = self.collisionRectangles{rectIndex};
+                        % [vertex, face, faceNormals] = self.RectangularPrism(rectangle.lower, rectangle.upper, rectangle.plotOptions);
                         [vertex, face, faceNormals] = self.RectangularPrism(rectangle.lower, rectangle.upper, rectangle.plotOptions);
 
                         for faceIndex = 1:size(face,1)

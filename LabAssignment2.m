@@ -26,7 +26,7 @@ classdef LabAssignment2 < handle
         guiObj;
         stack;
         startup = true;
-        collisionCount = 1;
+        flashCounter = 1;
 
         collisionRectangles = {
             struct('lower', [-2.5, 3.25, 0], 'upper', [4, 3.6, 2.1]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)), % Wall
@@ -86,10 +86,6 @@ classdef LabAssignment2 < handle
 
         function InitialiseEnvironment(self)
            Environment(); % Build the workspace for the robot
-
-            % Create an instance of the CollisionPoints class
-            % self.collisionRectangles = CollisionPoints();
-            % self.collisionRectangles.draw(gca);
 
             self.person = Person(transl(2.5,0,0));
 
@@ -367,18 +363,18 @@ classdef LabAssignment2 < handle
                 else
                     disp('no collisions detected')
                 end
-                self.collisionCount = self.collisionCount + 1;
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                % ERROR HERE, PLEASE LOOK AT, WILL FIX TMRW AT YOURS
-                % OTHERWISE
-                % i HAVE ADDED IN A BUNCH OF FUNCTIONS TOO PLEASE SEE
-               % if self.collisionRectangles.IsCollision(self.panda, self.pandaJointAngles) || self.collisionRectangles.IsCollision(self.linearUR5, self.ur5JointAngles) % || self.collisionRectangles.CheckCollision(self.gripper1)
-               %      disp('Collision detected!');
-               %      self.guiObj.estop = true;
-               % end
-               %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-               %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+                % FLASH LIGHTS
+                if self.guiObj.estop
+                    %RED
+                    
+                elseif self.guiObj.running
+                    %GREEN
+                end
+
+
+
+                self.flashCounter = self.flashCounter + 1;
 
             end
             self.startup = false;    

@@ -28,6 +28,7 @@ classdef LabAssignment2 < handle
         startup = true;
         flash = true;
         lightCurtains;
+        robotRunning = 'Panda';
 
         personPoint1;
         personPoint2;
@@ -53,7 +54,7 @@ classdef LabAssignment2 < handle
     methods
         function self = LabAssignment2()
             cla;
-            % clf;
+            clf;
             clc;
 
             h = findall(0, 'Type', 'figure', 'Name', 'MATLAB App');
@@ -164,6 +165,8 @@ classdef LabAssignment2 < handle
                     % STATE 4 is panda moving to safe position above final plate position (WITH plate)
                     % STATE 5 is panda placing plate in its final position
                     % STATE 6 is panda moving to safe position above final plate position (WITHOUT plate)
+
+                    self.robotRunning = 'Panda';
 
                     % Log the start time and status
                     logData.Time = {};
@@ -279,12 +282,12 @@ classdef LabAssignment2 < handle
                     self.AnimateGripper('open')
                 end
                 drawnow();
-                % pause(0.1);
             end
         end
 
         function MoveUR5(self, stack)
             self.plateStackerModel = self.stack{stack};
+            self.robotRunning = 'linearUR5';
 
             targetTransforms = cell(7);
             targetTransforms{1} = self.plateStackerModel.model.base.T;
@@ -336,8 +339,6 @@ classdef LabAssignment2 < handle
                         drawnow();
                     end
                     drawnow();
-                    pause(0.1);
-
                  end
                 self.UpdateRobots();
             end
@@ -358,22 +359,20 @@ classdef LabAssignment2 < handle
                     self.personPos = tr(1:3,4)';
                     self.personPoint2 = self.personPos;
                     self.personPoint2(3) = self.personPoint2(3) + 0.5;
+                    self.personPoint2(2) = self.personPoint2(2) + 0.15;
                     self.personPos(2) = self.personPos(2) + 0.05;
                     self.person.model.base = transl(self.personPos) * trotz(pi/2);
                     self.person.model.animate(0);
                     drawnow();
                     
-                    for i = 1:1
+                    for i = 1:3
                         [intersectionPoint, check] = LinePlaneIntersection(self.lightCurtains.normals(i,:), self.lightCurtains.midPoints(i,:), self.personPoint1, self.personPoint2);
-                        % check
-                        % intersectionPoint
-                        % self.personPoint2
                         if check == 1
                             if intersectionPoint(1) > self.lightCurtains.xLims(i,1) && intersectionPoint(1) < self.lightCurtains.xLims(i,2)
                                 if intersectionPoint(2) > self.lightCurtains.yLims(i,1) && intersectionPoint(2) < self.lightCurtains.yLims(i,2)
                                     if intersectionPoint(3) > self.lightCurtains.zLims(i,1) && intersectionPoint(3) < self.lightCurtains.zLims(i,2)
 
-                                        disp('light curtain collision')
+                                        disp(['Collision with Light Curtain ', num2str(i)])
                                         self.guiObj.estop = true;
                                         try
                                             delete(self.person);
@@ -383,21 +382,18 @@ classdef LabAssignment2 < handle
                             end
                         end
                     end
-
-                    % if curtainDist < 0.25 
-                    %     % within set distance to x,y of the light curtain
-                    %     self.guiObj.estop = true;
-                    %     try
-                    %         delete(self.person);
-                    %     end
-                    % end
                 end
 
-                if IsCollision(self.panda, self.pandaJointAngles, self.rectPrismData) || IsCollision(self.linearUR5, self.ur5JointAngles, self.rectPrismData ) % || self.collisionRectangles.CheckCollision(self.gripper1)
-                    disp('Collision detected!');
-                    self.guiObj.estop = true;
+                if strcmp('Panda',self.robotRunning)
+                    if IsCollision(self.panda, self.pandaJointAngles, self.rectPrismData)
+                        disp('Collision detected!');
+                        self.guiObj.estop = true;
+                    end
                 else
-                    % disp('no collisions detected')
+                    if IsCollision(self.linearUR5, self.ur5JointAngles, self.rectPrismData )
+                        disp('Collision detected!');
+                        self.guiObj.estop = true;
+                    end
                 end
             end
             self.startup = false;    

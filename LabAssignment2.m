@@ -58,7 +58,9 @@ classdef LabAssignment2 < handle
             clc;
 
             h = findall(0, 'Type', 'figure', 'Name', 'MATLAB App');
-            close(h);
+            if ~isempty(h)
+                close(h);
+            end
 
             hold on
             

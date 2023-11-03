@@ -40,6 +40,8 @@ classdef LabAssignment2 < handle
         blueLight1;
         blueLight2;
 
+        hardware = false;
+
         collisionRectangles = {
             struct('lower', [-2.5, 3.25, 0], 'upper', [4, 3.6, 2.1]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)), % Wall
             struct('lower', [-1.1, 1.5, 1.40], 'upper', [1.2, 2.15, 1.45]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)) % Plate stacker bench location
@@ -66,7 +68,7 @@ classdef LabAssignment2 < handle
             
             
             self.InitialiseRobots();
-            self.guiObj = GUI(self.linearUR5, self.panda);
+            self.guiObj = GUI(self.linearUR5, self.panda, self.hardware);
             self.InitialiseEnvironment();
             self.InitialisePlates();
             
@@ -122,7 +124,7 @@ classdef LabAssignment2 < handle
             % self.objPlates.placeStacker
 
             plateNum = 1;
-            for i = 1:3
+            for i = 1:2
                 for j = 1:3
                     baseTr = transl(self.objPlates.plateLocations{plateNum}(1:3));
                     switch i
@@ -178,24 +180,29 @@ classdef LabAssignment2 < handle
 
                     self.MoveToPos();
 
-                    if (i == 4 && self.pandaState == 1) || (i == 7 && self.pandaState == 1)
-                        if i == 4
+                    if self.pandaState == 6 && mod(i,3) == 0
+                        if i == 3
                             colour = 'red';
-                        elseif i == 7
+                            stackCounter = 1;
+                        elseif i == 6
                             colour = 'blue';
+                            stackCounter = 2;
+                        else 
+                            colour = 'green';
+                            stackCounter = 3;
                         end
 
                         try
                             delete(self.objPlates.stackers{stackCounter})
-                            delete(self.plates{i-3});
-                            delete(self.plates{i-2});
+                            delete(self.plates{i});
                             delete(self.plates{i-1});
+                            delete(self.plates{i-2});
                         end
-                        pos = self.objPlates.plateStack{i - 3}(1:3);
+                        pos = self.objPlates.plateStack{i}(1:3);
                         pos(3) = pos(3) - 0.04;
                         self.stack{stackCounter} = PlateStacker(transl(pos), colour);
                         self.MoveUR5(stackCounter)
-                        stackCounter = stackCounter + 1;
+                        % stackCounter = stackCounter + 1;
                     end
 
                     self.pandaState = self.pandaState + 1;
@@ -203,18 +210,18 @@ classdef LabAssignment2 < handle
                 self.plateCounter = self.plateCounter + 1;
             end
 
-            colour = 'green';
-            try
-                delete(self.objPlates.stackers{3})
-                delete(self.plates{7});
-                delete(self.plates{8});
-                delete(self.plates{9});
-            end
-            pos = self.objPlates.plateStack{7}(1:3);
-            pos(3) = pos(3) - 0.04;
-            self.stack{3} = PlateStacker(transl(pos), colour);
-
-            self.MoveUR5(stackCounter);
+            % colour = 'blue';
+            % try
+            %     delete(self.objPlates.stackers{2})
+            %     delete(self.plates{4});
+            %     delete(self.plates{5});
+            %     delete(self.plates{6});
+            % end
+            % pos = self.objPlates.plateStack{}(1:3);
+            % pos(3) = pos(3) - 0.04;
+            % self.stack{3} = PlateStacker(transl(pos), colour);
+            % 
+            % self.MoveUR5(stackCounter);
 
             % Display a message indicating the end of the task
             disp('Task Completed Successfully');

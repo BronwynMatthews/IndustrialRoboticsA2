@@ -43,10 +43,10 @@ classdef LabAssignment2_Fast < handle
         hardware = false;
 
         collisionRectangles = {
-            struct('lower', [-2.5, 3.25, 0], 'upper', [4, 3.6, 2.1]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)), % Wall
-            struct('lower', [-1.1, 1.5, 1.40], 'upper', [1.2, 2.15, 1.45]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)) % Plate stacker bench location
+            struct('lower', [-2.4, 3.27, 0], 'upper', [3.9, 3.45, 2.1]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)), % Wall
+            struct('lower', [-1.03, 1.5, 1.38], 'upper', [1.12, 2.15, 1.4]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)) % Plate stacker bench location
             struct('lower', [-1.7, 1, 0.8], 'upper', [1.7, 3.25, 0.9]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)) % Bench both robots mounted too
-            struct('lower', [-3.25, 2.3, 0], 'upper', [-1.75, 3.15, 1.95]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)) % Fridge
+            struct('lower', [-3.15, 2.4, 0], 'upper', [-1.65, 3.15, 1.95]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)) % Fridge
             % struct('lower', [0.8, 2.6, 0], 'upper', [1.3, 3.2, 1.95]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)) % Fridge
         };
         rectPrismData;

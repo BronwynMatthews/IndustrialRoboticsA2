@@ -1,62 +1,64 @@
 classdef LabAssignment2_Fast < handle
     properties
-        panda;
-        linearUR5;
-        gripper1;
-        gripper2;
-        objPlates;
-        plateCounter = 1;
-        plateStackerCounter = 1;
-        pandaJointAngles;
-        pandaEnd;
-        personPos;
-        pandaGripperOffset = 0.12; % RADIUS OF A PLATE
-        ur5JointAngles;
-        ur5End;
-        ur5GripperOffset = 0.25;
-        pandaState;
-        ur5State;
-        plates;
-        % collisionRectangles;
-        person;
-        plateModel;
-        plateStackerModel;
-        plateJoints = [0,0];
-        plateStackerJoints = [0,0];
+        % GUI
         guiObj;
-        stack;
         startup = true;
-        flash = true;
-        lightCurtains;
-        robotRunning = 'Panda';
-
-        personPoint1;
-        personPoint2;
-
-        redLight1;
-        redLight2;
-        greenLight1;
-        greenLight2;
+        
+        % LIGHTS
         blueLight1;
         blueLight2;
+        flash = true;
+        greenLight1;
+        greenLight2;
+        redLight1;
+        redLight2;
 
-        hardware = false;
-
-        collisionRectangles = {
-            struct('lower', [-2.4, 3.27, 0], 'upper', [3.9, 3.45, 2.1]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)), % Wall
-            struct('lower', [-1.03, 1.5, 1.38], 'upper', [1.12, 2.15, 1.4]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)) % Plate stacker bench location
-            struct('lower', [-1.7, 1, 0.8], 'upper', [1.7, 3.25, 0.9]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)) % Bench both robots mounted too
-            struct('lower', [-3.15, 2.4, 0], 'upper', [-1.65, 3.15, 1.95]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)) % Fridge
-            % struct('lower', [0.8, 2.6, 0], 'upper', [1.3, 3.2, 1.95]) %, 'plotOptions', struct('plotVerts', true, 'plotEdges', true, 'plotFaces', true)) % Fridge
-        };
+        % LOG TABLE
+        logTable;
+        
+        % PERSON
+        person;
+        personPoint1;
+        personPoint2;
+        personPos;
+        
+        % PLATES
+        objPlates;
+        plateCounter = 1;
+        plateJoints = [0,0];
+        plateModel;
+        plateStackerJoints = [0,0];
+        plateStackerModel;
+        plates;
+        stack;
+    
+        % ROBOTS
+        gripper1;
+        gripper2;
+        linearUR5;
+        panda;
+        pandaEnd;
+        pandaGripperOffset = 0.12; % RADIUS OF A PLATE
+        pandaJointAngles;
+        pandaState;
+        robotRunning = 'Panda';
+        ur5End;
+        ur5GripperOffset = 0.25; % OFFSET FOR END EFFECTOR/PLATES
+        ur5JointAngles;
+    
+        % SAFETY
+        collisionRectangles;
+        lightCurtains;
         rectPrismData;
 
+        % HARDWARE
+        hardware = false; 
     end
 
     methods
         function self = LabAssignment2_Fast()
             cla;
-            clf;
+            % clf;
             clc;
 
             h = findall(0, 'Type', 'figure', 'Name', 'MATLAB App');
@@ -64,21 +66,18 @@ classdef LabAssignment2_Fast < handle
                 close(h);
             end
 
-            hold on
-            
+            hold on;
             
             self.InitialiseRobots();
-            self.guiObj = GUI(self.linearUR5, self.panda, self.hardware);
+            self.guiObj = GUI(self.linearUR5, self.panda, self.hardware); % Creates a GUI model and passes in the two robot models as well as a bool for whether the system runs with hardware or not.
+            self.objPlates = InitialisePlates(); % Calculates the positions/tranforms of all the plates in start, stack, and final location
             self.InitialiseEnvironment();
-            self.InitialisePlates();
-            
-            self.RunRobot();
+
+            self.RunRobots();
         end
 
         function InitialiseRobots(self)
             self.panda = Panda(transl(1.6, 3.0, 0.95));
-
-            % below change to the new linear ur5 (with gripper attachment)
             self.linearUR5 = LinearUR5custom(transl(0.4, 2.6, 0.95));
 
             self.UpdateRobots();
@@ -87,27 +86,20 @@ classdef LabAssignment2_Fast < handle
             self.gripper2 = PandaGripper(self.pandaEnd, 2);
         end
 
-        function CheckGUI(self)
-            self.guiObj.UpdateGUI;
-            % self.FlashLights();
-            while ~self.guiObj.running
-                if ~self.guiObj.estop
-                    [tempQMatrix, robot] = self.guiObj.GetSliderValues();
-                    robot.model.animate(tempQMatrix);
-                end
-                % self.FlashLights();
-                pause(0.1);
-                self.guiObj.UpdateGUI;
-            end           
-        end
-
         function InitialiseEnvironment(self)
-           Environment(); % Build the workspace for the robot
+           Environment(); % BUILD THE WORKSPACE
 
-            self.person = Person(transl(2.5,0,0));
-            self.personPoint1 = [2.5, 0, 0.5];
+            self.person = Person(transl(2.5,0,0)); % PLACE A PERSON IN THE WORKSPACE
+            self.personPoint1 = [2.5, 0, 0.5]; % STORE THE START LOCATION OF THE PERSON FOR LINE PLANE INTERSECTION
 
-            self.lightCurtains = LightCurtains();
+            self.lightCurtains = LightCurtains(); % CALCULATE THE PLANES OF EACH LIGHT CURTAIN
+
+            self.collisionRectangles = {
+                struct('lower', [-2.4, 3.27, 0], 'upper', [3.9, 3.45, 2.1]) % Wall
+                struct('lower', [-1.03, 1.5, 1.38], 'upper', [1.12, 2.15, 1.4]) % Plate stacker bench location
+                struct('lower', [-1.7, 1, 0.8], 'upper', [1.7, 3.25, 0.9]) % Bench both robots mounted too
+                struct('lower', [-3.15, 2.4, 0], 'upper', [-1.65, 3.15, 1.95]) % Fridge
+            }; % RECTANGLES FOR COLLISION DETECTION
 
             self.rectPrismData = cell(length(self.collisionRectangles),3);
             
@@ -117,12 +109,10 @@ classdef LabAssignment2_Fast < handle
                 self.rectPrismData{i,2} = tempFace;
                 self.rectPrismData{i,3} = tempFaceNormals;
             end
-        end
 
-        function InitialisePlates(self)
-            self.objPlates = InitialisePlates(); % plot the plates in the workspace
-            % self.objPlates.placeStacker
+            self.stack = cell(3,1);
 
+            % THE BELOW FOR LOOP PLOTS ALL THE PLATES IN THE WORKSPACE
             plateNum = 1;
             for i = 1:3
                 for j = 1:3
@@ -140,139 +130,131 @@ classdef LabAssignment2_Fast < handle
                 end
             end
         end
-
-        function RunRobot(self)
-            self.UpdateRobots();
-            stackCounter = 1;
-            % Initialise log variable
-            logData = struct('Time', [], 'Status', [], 'Transform', []); % Create the logData Structure
-
-            % Log the start time and status
-            logData.Time = {};
-            logData.Time{end+1} = datestr(datetime('now'), 'yyyy-mm-dd HH:MM:SS'); % Log the time that the robot starts
-            logData.Status{end+1} = 'Task Started';
-            logData.Transform{end+1} = 'N/A';
-
-            for i = 1:self.objPlates.numOfPlates
-                disp(['Panda unstacking plate ', num2str(i)])
-                self.pandaState = 1;
-                self.ur5State = 1;
-                self.plateModel = self.plates{self.plateCounter};
-
-
-                % self.movePanda();
-
-                for j = 1:6
-                    % STATE 1 is panda moving to safe position above initial plate position (WITHOUT plate)
-                    % STATE 2 is panda picking up plate from initial plate position
-                    % STATE 3 is panda moving to safe position above initial plate position (WITH plate)
-                    % STATE 4 is panda moving to safe position above final plate position (WITH plate)
-                    % STATE 5 is panda placing plate in its final position
-                    % STATE 6 is panda moving to safe position above final plate position (WITHOUT plate)
-
-                    self.robotRunning = 'Panda';
-
-                    % Log the start time and status
-                    logData.Time = {};
-                    logData.Time{end+1} = datestr(datetime('now'), 'yyyy-mm-dd HH:MM:SS'); % Log the time that the robot starts
-                    logData.Status{end+1} = ['Panda picking/placing plate ', num2str(i), ' in State ', num2str(j)];
-                    logData.Transform{end+1} = mat2str(self.objPlates.initialTargetTransforms{i}(1:3, 4).');
-
-                    self.MoveToPos();
-
-                    if (i == 4 && self.pandaState == 1) || (i == 7 && self.pandaState == 1)
-                        if i == 4
-                            colour = 'red';
-                        elseif i == 7
-                            colour = 'blue';
-                        end
-
-                        try
-                            delete(self.objPlates.stackers{stackCounter})
-                            delete(self.plates{i-3});
-                            delete(self.plates{i-2});
-                            delete(self.plates{i-1});
-                        end
-                        pos = self.objPlates.plateStack{i - 3}(1:3);
-                        pos(3) = pos(3) - 0.04;
-                        self.stack{stackCounter} = PlateStacker(transl(pos), colour);
-                        self.MoveUR5(stackCounter)
-                        stackCounter = stackCounter + 1;
-                    end
-
-                    self.pandaState = self.pandaState + 1;
+        
+        function CheckGUI(self) % UPDATES THE VALUES OF THE GUI - CALLED RECURSIVELY FROM THE UPDATEROBOTS() FUNCTION
+            self.guiObj.UpdateGUI;
+            % self.FlashLights(); % commented out for 'fast' simulation
+            while ~self.guiObj.running
+                if ~self.guiObj.estop
+                    [tempQMatrix, robot] = self.guiObj.GetSliderValues();
+                    robot.model.animate(tempQMatrix);
                 end
-                self.plateCounter = self.plateCounter + 1;
-            end
-
-            colour = 'green';
-            try
-                delete(self.objPlates.stackers{3})
-                delete(self.plates{7});
-                delete(self.plates{8});
-                delete(self.plates{9});
-            end
-            pos = self.objPlates.plateStack{7}(1:3);
-            pos(3) = pos(3) - 0.04;
-            self.stack{3} = PlateStacker(transl(pos), colour);
-
-            self.MoveUR5(stackCounter);
-
-            % Display a message indicating the end of the task
-            disp('Task Completed Successfully');
-            % Log the end time and status
-            logData.Time{end+1} = datestr(datetime('now'), 'yyyy-mm-dd HH:MM:SS');
-            logData.Status{end+1} = 'Task Completed';
-            logData.Transform{end+1} = 'N/A';
-            % Save the log data
-            save('logData.mat', 'logData');
+                % self.FlashLights();  % commented out for 'fast' simulation
+                pause(0.1);
+                self.guiObj.UpdateGUI;
+            end           
         end
 
-        function MoveToPos(self)
+        function RunRobots(self)
+            self.UpdateRobots();
+            stackCounter = 1;
+
+            % Initialise an empty table with the necessary variables
+            self.logTable = table(datetime, string, string, {zeros(4)}, {zeros(4)}, ...
+                'VariableNames', {'Time', 'Status', 'Robot', 'Target_Transform', 'Reached_Transform'});
+            
+            % Fill in a row of the table
+            newRow = {datetime('now','Format', 'dd/MM/uuuu HH:mm:ss'), 'Task Started', 'Panda', self.pandaEnd.T, self.pandaEnd.T};
+            self.logTable = [self.logTable; newRow];
+
+            newRow = {datetime('now','Format', 'dd/MM/uuuu HH:mm:ss'), 'Task Started', 'LinearUR5', self.ur5End.T, self.ur5End.T};
+            self.logTable = [self.logTable; newRow];
+
+            for i = 1:self.objPlates.numOfPlates
+                disp(['Panda unstacking plate ', num2str(i)]);
+                self.plateModel = self.plates{i}; % DEFINES THE PLATE TO BE ANIMATED
+                self.plateCounter = i; % GLOBAL VARIABLE FOR PLATE COUNT
+
+                for j = 1:6 % MOVES THE PANDA THROUGH EACH TRANSFORM FOR DISHWASHER UNSTACKING
+                    self.pandaState = j;
+
+                    self.MovePanda();
+
+                    self.logTable.Reached_Transform{end} = self.pandaEnd.T;
+
+                    if self.pandaState == 1 && (i == 4 || i == 7)
+                        self.MoveUR5(stackCounter)
+
+                        stackCounter = stackCounter + 1;
+                    end
+                end
+            end
+
+            self.plateCounter = self.plateCounter + 1;
+            
+            newRow = {datetime('now','Format', 'dd/MM/uuuu HH:mm:ss'), 'All tasks completed successfully!', self.robotRunning, self.pandaEnd.T, self.pandaEnd.T};
+            self.logTable = [self.logTable; newRow];
+
+            self.MoveUR5(stackCounter)
+
+            newRow = {datetime('now','Format', 'dd/MM/uuuu HH:mm:ss'), 'All tasks completed successfully!', self.robotRunning, self.ur5End.T, self.ur5End.T};
+            self.logTable = [self.logTable; newRow];
+
+            % Display a message indicating the end of the task
+            disp('All Tasks Completed Successfully');
+
+            logTable = self.logTable;
+
+            % Save the log data
+            save('logTable.mat', 'logTable');
+        end
+
+        function MovePanda(self)
             self.UpdateRobots();
             steps = 10;
+            self.robotRunning = 'Panda';
+            
             switch self.pandaState
                 case 1
                     disp('CASE 1')
                     targetPos = self.objPlates.safeInitialTargetTransforms{self.plateCounter};
                     rpy = rpy2tr(0, 180, 0, 'deg');
+                    state = 'Moving to safe position above initial plate position (WITHOUT plate)';
                 case 2
                     disp('CASE 2')
                     targetPos = self.objPlates.initialTargetTransforms{self.plateCounter};
                     steps = 10;
                     rpy = rpy2tr(0, 180, 0, 'deg');
+                    state = 'Picking up plate from initial plate position';
                 case 3
                     disp('CASE 3')
                     targetPos = self.objPlates.safeInitialTargetTransforms{self.plateCounter};
                     steps = 10;
                     rpy = rpy2tr(0, 180, 0, 'deg');
+                    state = 'Moving back to safe position above initial plate position (WITH plate)';
                 case 4
                     disp('CASE 4')
                     targetPos = self.objPlates.safeStackTargetTransforms{self.plateCounter};
                     rpy = rpy2tr(-90, 180, 90, 'deg');
+                    state = 'Moving to safe position above final plate position (WITH plate)';
                 case 5
                     disp('CASE 5')
                     targetPos = self.objPlates.stackTargetTransforms{self.plateCounter};
                     steps = 10;
                     rpy = rpy2tr(-90, 180, 90, 'deg');
+                    state = 'Placing plate in its final position';
                 case 6
                     disp('CASE 6')
                     targetPos = self.objPlates.safeStackTargetTransforms{self.plateCounter};
                     steps = 10;
                     rpy = rpy2tr(-90, 180, 90, 'deg');
+                    state = 'Moving back to safe position above final plate position (WITHOUT plate)';
             end
-            
+
+            disp(state);
+
             targetPos = targetPos * rpy;
+
+            newRow = {datetime('now','Format', 'dd/MM/uuuu HH:mm:ss'), state, self.robotRunning, targetPos, {}};
+            self.logTable = [self.logTable; newRow];
 
             if self.pandaState == 1 || self.pandaState == 4 || self.pandaState == 6 
                 qFinal = self.panda.model.ikcon(targetPos, self.pandaJointAngles);
                 qMatrix = jtraj(self.pandaJointAngles, qFinal, steps);
-                self.AnimatePanda(qMatrix);
-                
             else
                 qMatrix = ResolvedMotionRateControl(self.panda, targetPos, 'vertical');
-                self.AnimatePanda(qMatrix);
             end
+            self.AnimatePanda(qMatrix);
         end
 
         function AnimatePanda(self, qMatrix)
@@ -289,49 +271,42 @@ classdef LabAssignment2_Fast < handle
             end
         end
 
-        function MoveUR5(self, stack)
-            self.plateStackerModel = self.stack{stack};
-            self.robotRunning = 'linearUR5';
-
-            targetTransforms = cell(7);
-            targetTransforms{1} = self.plateStackerModel.model.base.T;
-            if stack == 1
-                targetTransforms{1}(1,4) = targetTransforms{1}(1,4) - self.ur5GripperOffset - 0.15;
-                targetTransforms{1} = targetTransforms{1} * rpy2tr(0, -90, 90, 'deg');  
-                
-                targetTransforms{2} = targetTransforms{1};
-                targetTransforms{2}(1,4) = targetTransforms{2}(1,4) + 0.15;
-
-                targetTransforms{3} = targetTransforms{2};
-                targetTransforms{3} = targetTransforms{2} * rpy2tr(-90, 0, 0, 'deg');
-            else
-                targetTransforms{1}(2,4) = targetTransforms{1}(2,4) + self.ur5GripperOffset + 0.15;
-                targetTransforms{1} = targetTransforms{1} * rpy2tr(0, -90, 0, 'deg');  
-
-                targetTransforms{2} = targetTransforms{1};
-                targetTransforms{2}(2,4) = targetTransforms{2}(2,4) - 0.15;
-
-                targetTransforms{3} = targetTransforms{2};
+        function MoveUR5(self, stackCounter)
+            self.robotRunning = 'LinearUR5';
+            if stackCounter == 1
+                colour = 'red';
+            elseif stackCounter == 2
+                colour = 'blue';
+            elseif stackCounter == 3
+                colour = 'green';
             end
-            targetTransforms{3}(3,4) = targetTransforms{3}(3,4) + 0.45;
+            
+            pos = self.objPlates.plateStack{1 + ((stackCounter - 1) * 3)}(1:3);
+            pos(3) = pos(3) - 0.04;
+            self.stack{stackCounter} = PlateStacker(transl(pos), colour);
+            
+            self.plateStackerModel = self.stack{stackCounter};
+            try
+                delete(self.objPlates.stackers{stackCounter})
+                delete(self.plates{self.plateCounter - 3});
+                delete(self.plates{self.plateCounter - 2});
+                delete(self.plates{self.plateCounter - 1});
+            end
 
-            targetTransforms{4} = self.objPlates.finalTargetTransforms{stack} * rpy2tr(0, -90, 90, 'deg');
-            targetTransforms{4}(2,4) = targetTransforms{4}(2,4) + self.ur5GripperOffset + 0.25;
+            targetTransforms = self.objPlates.PlateStackerTransforms(self.linearUR5, stackCounter, self.plateStackerModel);
 
-            targetTransforms{5} = targetTransforms{4};
-            targetTransforms{5}(2,4) = targetTransforms{5}(2,4) - 0.25;
+            for i = 1:7
+                tr = targetTransforms{i};
 
-            targetTransforms{6} = targetTransforms{4};
+                status = ['Moving stack ', num2str(stackCounter), ' to shelf'];
 
-            targetTransforms{7} = self.linearUR5.model.fkine(self.linearUR5.q0);
-
-            for i = 1:length(targetTransforms)
-                T1 = targetTransforms{i};
+                newRow = {datetime('now','Format', 'dd/MM/uuuu HH:mm:ss'), status, self.robotRunning, tr, {}};
+                self.logTable = [self.logTable; newRow];
 
                 if i == 4 % using RMRC
-                    qMatrix = ResolvedMotionRateControl(self.linearUR5, T1, 'horizontal');
+                    qMatrix = ResolvedMotionRateControl(self.linearUR5, tr, 'horizontal');
                 else
-                    angles = self.linearUR5.model.ikcon(T1, self.ur5JointAngles);
+                    angles = self.linearUR5.model.ikcon(tr, self.ur5JointAngles);
                     qMatrix = jtraj(self.ur5JointAngles, angles, 10);
                 end
 
@@ -340,11 +315,12 @@ classdef LabAssignment2_Fast < handle
                     self.linearUR5.model.animate(q);
                     if i >= 3 && i < 6
                         self.MovePlateStacker()
-                        drawnow();
                     end
                     drawnow();
-                 end
+                end
                 self.UpdateRobots();
+
+                self.logTable.Reached_Transform{end} = self.ur5End.T;
             end
         end
 
@@ -388,7 +364,7 @@ classdef LabAssignment2_Fast < handle
                     end
                 end
 
-                if strcmp('Panda',self.robotRunning)
+                if strcmp('Panda',self.robotRunning) 
                     if IsCollision(self.panda, self.pandaJointAngles, self.rectPrismData)
                         disp('Collision detected!');
                         self.guiObj.estop = true;
@@ -403,7 +379,7 @@ classdef LabAssignment2_Fast < handle
             self.startup = false;    
         end
 
-        function FlashLights(self)
+        function FlashLights(self) % NOT USED FOR SIMULATION EFFICIENCY
             if self.flash
                     if self.guiObj.estop 
                         %RED

@@ -15,28 +15,27 @@ classdef InitialisePlates < handle
         safeStackTargetTransforms;
         finalTargetTransforms;
         safeFinalTargetTransforms;
+        stackerTransforms;
         safeOffset = 0.3;
         plateOffset = 0.12;
         stackers;
+        ur5GripperOffset = 0.25; % OFFSET FOR END EFFECTOR/PLATES
     end
     
     methods
         function self = InitialisePlates()
-            self.platePositions();
-            self.plateStacker();
-            self.placePlates();
-            
-
+            self.PlatePositions();
+            self.PlateStacker();
+            self.PlateTransforms();
+            % self.PlateStackerTransforms(ur5);
         end
 
-        
-
-        function platePositions(self)
+        function PlatePositions(self)
 
             platesXYZ = {
                 [0.8, 2.9, 1.04];
                 [0.95, 2.55, 1.04];
-                [1.25, 2.4, 1.04];
+                [1.3, 2.4, 1.04];
                 
             };
     
@@ -62,34 +61,14 @@ classdef InitialisePlates < handle
                 [1.95, 2.80, 1.00];
             };
 
-            % self.plateStack = {
-            %     [0.95, 3.00, 1.04];
-            %     [0.95, 3.00, 1.06];
-            %     [0.95, 3.00, 1.08];
-            %     [0.85, 2.7, 1.04];
-            %     [0.85, 2.7, 1.06];
-            %     [0.85, 2.7, 1.08];
-            %     [1.13, 2.59, 1.04];
-            %     [1.13, 2.59, 1.06];
-            %     [1.13, 2.59, 1.08];
-            % }; % WOKRING 8/9
-
-            % plot3(self.plateStack{1}(1), self.plateStack{1}(2), 1.1, 'x')
-            % plot3(self.plateStack{4}(1), self.plateStack{4}(2), 1.1, 'x')
-            % plot3(self.plateStack{7}(1), self.plateStack{7}(2), 1.1, 'x')
-
             self.plateFinal = {
                 [0.5, 1.95, 1.45];
                 [0.0, 1.95, 1.45];
                 [-0.5, 1.95, 1.45];
             };
-
-            % plot3(self.plateFinal{1}(1), self.plateFinal{1}(2), 1.5, 'o')
-            % plot3(self.plateFinal{2}(1), self.plateFinal{2}(2), 1.5, 'o')
-            % plot3(self.plateFinal{3}(1), self.plateFinal{3}(2), 1.5, 'o')
         end
 
-        function placePlates(self)
+        function PlateTransforms(self)
             self.numOfPlates = length(self.plateLocations);
 
             % Convert initial and final plate locations to target transforms
@@ -117,24 +96,49 @@ classdef InitialisePlates < handle
             end
         end
 
-        function plateStacker(self)
+        function PlateStacker(self)
             stack = 1;
             for i = 1:3
                 pos = self.plateStack{stack}(1:3);
-                % pos(1) = pos(1) - 0.07;
-                % pos(2) = pos(2) + 0.14;
                 pos(3) = pos(3) - 0.09;
                 self.stackers{i} = PlaceObject('plateStacker.ply', pos);
                 stack = stack + 3;
             end
-
-            % Unsure if below is required as it sets verts?? Left it in
-            % incase
-            % verts = get(p, 'Vertices');
-            % verts = verts - initialPlace;  % Translate to origin
-            % verts = verts(:, 1:3) + initialPlace;  % Translate back to original position
-            % set(p, 'Vertices', verts);
         end
 
+        function transforms = PlateStackerTransforms(self, ur5, stackCounter, stackModel)
+            transforms = cell(7);
+            transforms{1} = stackModel.model.base.T;
+            if stackCounter == 1
+                transforms{1}(1,4) = transforms{1}(1,4) - self.ur5GripperOffset - 0.15;
+                transforms{1} = transforms{1} * rpy2tr(0, -90, 90, 'deg');  
+
+                transforms{2} = transforms{1};
+                transforms{2}(1,4) = transforms{2}(1,4) + 0.15;
+
+                transforms{3} = transforms{2};
+                transforms{3} = transforms{2} * rpy2tr(-90, 0, 0, 'deg');
+            else
+                transforms{1}(2,4) = transforms{1}(2,4) + self.ur5GripperOffset + 0.15;
+                transforms{1} = transforms{1} * rpy2tr(0, -90, 0, 'deg');  
+
+                transforms{2} = transforms{1};
+                transforms{2}(2,4) = transforms{2}(2,4) - 0.15;
+
+                transforms{3} = transforms{2};
+            end
+            transforms{3}(3,4) = transforms{3}(3,4) + 0.45;
+
+            transforms{4} = self.finalTargetTransforms{stackCounter} * rpy2tr(0, -90, 90, 'deg');
+            transforms{4}(2,4) = transforms{4}(2,4) + self.ur5GripperOffset + 0.25;
+
+            transforms{5} = transforms{4};
+            transforms{5}(2,4) = transforms{5}(2,4) - 0.25;
+
+            transforms{6} = transforms{4};
+
+            transforms{7} = ur5.model.fkine(ur5.q0).T;
+
+        end
     end
 end

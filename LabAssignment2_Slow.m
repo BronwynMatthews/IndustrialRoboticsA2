@@ -177,6 +177,10 @@ classdef LabAssignment2_Slow < handle
                     logData.Time{end+1} = datestr(datetime('now'), 'yyyy-mm-dd HH:MM:SS'); % Log the time that the robot starts
                     logData.Status{end+1} = ['Panda picking/placing plate ', num2str(i), ' in State ', num2str(j)];
                     logData.Transform{end+1} = mat2str(self.objPlates.initialTargetTransforms{i}(1:3, 4).');
+                    % disp("Panda Joint Angles =");
+                    % self.pandaJointAngles
+                    % disp("Panda End effector transform =");
+                    % self.panda.model.fkine()
 
                     self.MoveToPos();
 
@@ -345,6 +349,10 @@ classdef LabAssignment2_Slow < handle
                     drawnow();
                  end
                 self.UpdateRobots();
+                % disp("UR5 Joint Angles =");
+                % self.ur5JointAngles
+                % disp("UR5 End effector transform =");
+                % self.linearUR5.model.fkine(self.ur5JointAngles)
             end
         end
 

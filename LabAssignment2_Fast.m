@@ -87,10 +87,10 @@ classdef LabAssignment2_Fast < handle
         end
 
         function InitialiseEnvironment(self)
-           Environment(); % BUILD THE WORKSPACE
-
-            self.person = Person(transl(2.5,0,0)); % PLACE A PERSON IN THE WORKSPACE
-            self.personPoint1 = [2.5, 0, 0.5]; % STORE THE START LOCATION OF THE PERSON FOR LINE PLANE INTERSECTION
+            Environment(); % BUILD THE WORKSPACE
+            self.personPoint1 = [2.5, 0, 0.5];
+            self.person = Person(transl(2.5, 0, 0)); % PLACE A PERSON IN THE WORKSPACE
+             % STORE THE START LOCATION OF THE PERSON FOR LINE PLANE INTERSECTION
 
             self.lightCurtains = LightCurtains(); % CALCULATE THE PLANES OF EACH LIGHT CURTAIN
 

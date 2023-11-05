@@ -37,9 +37,21 @@ function qMatrix = ResolvedMotionRateControl(model, tr1, plane)
                 x(1,i) = (1-s(i))*startPoint(1) + s(i)*endPoint(1);  % Linear interpolation in x
                 x(2,i) = (1-s(i))*startPoint(2) + s(i)*endPoint(2);  % Linear interpolation in y
                 x(3,i) = startPoint(3);  % Constant z-height
-            else
+            elseif strcmp(plane, 'vertical')
                 x(1,i) = startPoint(1);  % Constant x
                 x(2,i) = startPoint(2); % Constant y
+                x(3,i) = (1-s(i))*startPoint(3) + s(i)*endPoint(3);  % Constant z-height
+            elseif strcmp(plane, 'x')
+                x(1,i) = startPoint(1);  % Constant x
+                x(2,i) = (1-s(i))*startPoint(2) + s(i)*endPoint(2); % Linear interpolation in y
+                x(3,i) = (1-s(i))*startPoint(3) + s(i)*endPoint(3);  % Linear interpolation in z
+            elseif strcmp(plane, 'y')
+                x(1,i) = (1-s(i))*startPoint(1) + s(i)*endPoint(1);  % Linear interpolation in x
+                x(2,i) = startPoint(2); % Constant y
+                x(3,i) = (1-s(i))*startPoint(3) + s(i)*endPoint(3);  % Linear interpolation in z
+            elseif strcmp(plane, 'z')
+                x(1,i) = startPoint(1);  % Linear interpolation in x
+                x(2,i) = startPoint(2); % Linear interpolation in y
                 x(3,i) = (1-s(i))*startPoint(3) + s(i)*endPoint(3);  % Constant z-height
             end
             theta(1,i) = rpy(1);          % Constant Roll angle 

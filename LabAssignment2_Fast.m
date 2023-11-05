@@ -69,7 +69,7 @@ classdef LabAssignment2_Fast < handle
             hold on;
             
             self.InitialiseRobots();
-            self.guiObj = GUI(self.linearUR5, self.panda, self.hardware); % Creates a GUI model and passes in the two robot models as well as a bool for whether the system runs with hardware or not.
+            self.guiObj = GUI(self.linearUR5, self.panda, self.hardware, 'COM3'); % Creates a GUI model and passes in the two robot models as well as a bool for whether the system runs with hardware or not.
             self.objPlates = InitialisePlates(); % Calculates the positions/tranforms of all the plates in start, stack, and final location
             self.InitialiseEnvironment();
 
@@ -140,6 +140,7 @@ classdef LabAssignment2_Fast < handle
                     robot.model.animate(tempQMatrix);
                 end
                 % self.FlashLights();  % commented out for 'fast' simulation
+                % self.guiObj.JogRobot();
                 pause(0.1);
                 self.guiObj.UpdateGUI;
             end           

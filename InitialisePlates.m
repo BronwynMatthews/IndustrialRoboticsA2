@@ -27,7 +27,6 @@ classdef InitialisePlates < handle
             self.PlatePositions();
             self.PlateStacker();
             self.PlateTransforms();
-            % self.PlateStackerTransforms(ur5);
         end
 
         function PlatePositions(self)

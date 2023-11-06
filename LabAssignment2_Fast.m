@@ -63,34 +63,33 @@ classdef LabAssignment2_Fast < handle
 
             h = findall(0, 'Type', 'figure', 'Name', 'MATLAB App');
             if ~isempty(h)
-                close(h);
+                close(h); % closes any open matlab GUI's
             end
 
-            hold on;
+            hold on; % keeps all elements of the simulation in the same figure
             
-            self.InitialiseRobots();
+            self.InitialiseRobots(); % creates the robot models for the simulations
             self.guiObj = GUI(self.linearUR5, self.panda, self.hardware, 'COM3'); % Creates a GUI model and passes in the two robot models as well as a bool for whether the system runs with hardware or not.
             self.objPlates = InitialisePlates(); % Calculates the positions/tranforms of all the plates in start, stack, and final location
-            self.InitialiseEnvironment();
+            self.InitialiseEnvironment(); % creates the visual elements of the workspace
 
-            self.RunRobots();
+            self.RunRobots(); % function that operates the simulation
         end
 
         function InitialiseRobots(self)
-            self.panda = Panda(transl(1.6, 3.0, 0.95));
-            self.linearUR5 = LinearUR5custom(transl(0.4, 2.6, 0.95));
+            self.panda = Panda(transl(1.6, 3.0, 0.95)); % 7-DOF panda robot
+            self.linearUR5 = LinearUR5custom(transl(0.4, 2.6, 0.95)); % 7-DOF linear ur5 
 
-            self.UpdateRobots();
+            self.UpdateRobots(); % function to update the global properties of the simulation related to the robots
 
-            self.gripper1 = PandaGripper(self.pandaEnd, 1);
-            self.gripper2 = PandaGripper(self.pandaEnd, 2);
+            self.gripper1 = PandaGripper(self.pandaEnd, 1); % Panda gripper
+            self.gripper2 = PandaGripper(self.pandaEnd, 2); % Panda gripper
         end
 
         function InitialiseEnvironment(self)
             Environment(); % BUILD THE WORKSPACE
-            self.personPoint1 = [2.5, 0, 0.5];
+            self.personPoint1 = [2.5, 0, 0.5]; % STORE THE START LOCATION OF THE PERSON FOR LINE PLANE INTERSECTION
             self.person = Person(transl(2.5, 0, 0)); % PLACE A PERSON IN THE WORKSPACE
-             % STORE THE START LOCATION OF THE PERSON FOR LINE PLANE INTERSECTION
 
             self.lightCurtains = LightCurtains(); % CALCULATE THE PLANES OF EACH LIGHT CURTAIN
 
@@ -140,8 +139,7 @@ classdef LabAssignment2_Fast < handle
                     robot.model.animate(tempQMatrix);
                 end
                 % self.FlashLights();  % commented out for 'fast' simulation
-                % self.guiObj.JogRobot();
-                pause(0.1);
+                pause(0.1); % avoid overloading the CPU
                 self.guiObj.UpdateGUI;
             end           
         end
@@ -173,7 +171,7 @@ classdef LabAssignment2_Fast < handle
 
                     self.logTable.Reached_Transform{end} = self.pandaEnd.T;
 
-                    if self.pandaState == 1 && (i == 4 || i == 7)
+                    if self.pandaState == 1 && (i == 4 || i == 7) % When the panda has finishing unstacking a set of plates the UR5 will move them to a shelf
                         self.MoveUR5(stackCounter)
 
                         stackCounter = stackCounter + 1;
@@ -196,7 +194,7 @@ classdef LabAssignment2_Fast < handle
 
             logTable = self.logTable;
 
-            % Save the log data
+            % Save the log data in a table
             save('logTable.mat', 'logTable');
         end
 
@@ -205,41 +203,38 @@ classdef LabAssignment2_Fast < handle
             steps = 10;
             self.robotRunning = 'Panda';
             
+            % THE BELOW TELLS THE PANDA WHICH ORIENTATION TO PICK/PLACE THE PLATES IN
             switch self.pandaState
                 case 1
                     disp('CASE 1')
                     targetPos = self.objPlates.safeInitialTargetTransforms{self.plateCounter};
                     rpy = rpy2tr(0, 180, 0, 'deg');
-                    state = 'Moving to safe position above initial plate position (WITHOUT plate)';
+                    state = ['Moving to safe position above plate ', num2str(self.plateCounter), ' (WITHOUT plate)'];
                 case 2
                     disp('CASE 2')
                     targetPos = self.objPlates.initialTargetTransforms{self.plateCounter};
-                    steps = 10;
                     rpy = rpy2tr(0, 180, 0, 'deg');
-                    state = 'Picking up plate from initial plate position';
+                    state = ['Picking up plate ', num2str(self.plateCounter), ' from dishwasher'];
                 case 3
                     disp('CASE 3')
                     targetPos = self.objPlates.safeInitialTargetTransforms{self.plateCounter};
-                    steps = 10;
                     rpy = rpy2tr(0, 180, 0, 'deg');
-                    state = 'Moving back to safe position above initial plate position (WITH plate)';
+                    state = ['Moving to safe position above plate ', num2str(self.plateCounter), ' (WITH plate)'];
                 case 4
                     disp('CASE 4')
                     targetPos = self.objPlates.safeStackTargetTransforms{self.plateCounter};
                     rpy = rpy2tr(-90, 180, 90, 'deg');
-                    state = 'Moving to safe position above final plate position (WITH plate)';
+                    state = ['Moving to safe position above plate ', num2str(self.plateCounter), ' stack position (WITH plate)'];
                 case 5
                     disp('CASE 5')
                     targetPos = self.objPlates.stackTargetTransforms{self.plateCounter};
-                    steps = 10;
                     rpy = rpy2tr(-90, 180, 90, 'deg');
-                    state = 'Placing plate in its final position';
+                    state = ['Placing plate ', num2str(self.plateCounter), ' in stack'];
                 case 6
                     disp('CASE 6')
                     targetPos = self.objPlates.safeStackTargetTransforms{self.plateCounter};
-                    steps = 10;
                     rpy = rpy2tr(-90, 180, 90, 'deg');
-                    state = 'Moving back to safe position above final plate position (WITHOUT plate)';
+                    state = ['Moving to safe position above plate ', num2str(self.plateCounter), ' stack position (WITHOUT plate)'];
             end
 
             disp(state);
@@ -249,11 +244,11 @@ classdef LabAssignment2_Fast < handle
             newRow = {datetime('now','Format', 'dd/MM/uuuu HH:mm:ss'), state, self.robotRunning, targetPos, {}};
             self.logTable = [self.logTable; newRow];
 
-            if self.pandaState == 1 || self.pandaState == 4 || self.pandaState == 6 
+            if self.pandaState == 1 || self.pandaState == 4 || self.pandaState == 6 % JTRAJ USED FOR NON-VERTICAL MOVEMENT
                 qFinal = self.panda.model.ikcon(targetPos, self.pandaJointAngles);
                 qMatrix = jtraj(self.pandaJointAngles, qFinal, steps);
             else
-                qMatrix = ResolvedMotionRateControl(self.panda, targetPos, 'vertical');
+                qMatrix = ResolvedMotionRateControl(self.panda, targetPos, 'vertical'); % RMRC USED FOR PRECISE VERTICAL MOVEMENT
             end
             self.AnimatePanda(qMatrix);
         end
@@ -385,8 +380,7 @@ classdef LabAssignment2_Fast < handle
                     if self.guiObj.estop 
                         %RED
                         self.redLight1 = PlaceObject('LightOnRed_fridge.ply', [-1.7, 3, 1.6]);
-                        self.redLight2 = PlaceObject('LightOnRed_backWall.ply', [2.1, 3.25, 1.6]);
-                        
+                        self.redLight2 = PlaceObject('LightOnRed_backWall.ply', [2.1, 3.25, 1.6]);                        
                     elseif self.guiObj.running
                         %GREEN
                         self.greenLight1 = PlaceObject('LightOnGreen_fridge.ply', [-1.7, 3, 1.6]);
